@@ -18,6 +18,7 @@ import { getInput } from '../core/input';
 import { stepEnemyAI, stepEnemyProjectiles } from '../systems/enemy-ai';
 import { initParticles, stepParticles } from '../systems/particles';
 import { initScreenShake, updateScreenShake, addTrauma } from '../core/screenshake';
+import { initDamageNumbers } from '../systems/damage-numbers';
 
 import {
   checkPowerUpSpawns,
@@ -26,16 +27,61 @@ import {
   updateFlamethrower,
 } from '../systems/powerups';
 import type { WorldState } from '../types';
+import type { CharacterDefinition } from '../data/characters';
+import { WEAPON_DEFINITIONS, createWeaponFromDef } from '../systems/weapon-library';
 
 /**
  * Initialize a new world state with the given seed.
  * @param seed - RNG seed for determinism
- * @param includeDefaultWeapon - Whether to add a default weapon (default: true)
+ * @param character - Character definition (optional, uses default if not provided)
  * @returns Initial world state
  */
-export function initWorld(seed: number, includeDefaultWeapon = true): WorldState {
+export function initWorld(seed: number, character?: CharacterDefinition): WorldState {
   const projectilesPool = makePool(createProjectileFactory(), 512);
   const particlesPool = initParticles(256);
+  const damageNumbersPool = initDamageNumbers(128);
+
+  // Initialize weapon based on character
+  const weapons = [];
+  if (character) {
+    const weaponDef = WEAPON_DEFINITIONS[character.startingWeapon];
+    if (weaponDef) {
+      weapons.push(createWeaponFromDef(weaponDef, 1));
+    }
+  } else {
+    // Default weapon if no character provided
+    weapons.push(
+      createWeapon('default', {
+        type: 'starter',
+        damage: 10,
+        cooldown: 0.5,
+        projectileSpeed: 300,
+        projectileCount: 1,
+        spreadAngle: 0,
+        ttl: 2.0,
+      })
+    );
+  }
+
+  // Initialize player stats based on character
+  const baseStats = character?.baseStats || {
+    maxHp: 100,
+    moveSpeed: 1.0,
+    might: 1.0,
+    armor: 0,
+    recovery: 0,
+    cooldown: 1.0,
+    area: 1.0,
+    speed: 1.0,
+    duration: 1.0,
+    amount: 0,
+    magnet: 0,
+    luck: 0,
+    growth: 1.0,
+    greed: 0,
+    curse: 0,
+    revivals: 0,
+  };
 
   return {
     seed,
@@ -52,19 +98,7 @@ export function initWorld(seed: number, includeDefaultWeapon = true): WorldState
       xpCollected: 0,
       timeSurvived: 0,
     },
-    weapons: includeDefaultWeapon
-      ? [
-          createWeapon('default', {
-            type: 'starter',
-            damage: 10,
-            cooldown: 0.5,
-            projectileSpeed: 300,
-            projectileCount: 1,
-            spreadAngle: 0,
-            ttl: 2.0,
-          }),
-        ]
-      : [],
+    weapons,
     projectiles: [],
     projectilesPool,
     enemyProjectiles: [],
@@ -72,8 +106,8 @@ export function initWorld(seed: number, includeDefaultWeapon = true): WorldState
     spawnAccumulator: 0,
     player: {
       pos: { x: 400, y: 300 }, // Center of 800x600 canvas
-      hp: 100,
-      maxHp: 100,
+      hp: baseStats.maxHp,
+      maxHp: baseStats.maxHp,
       iframes: 0,
       iframeDuration: 1.0, // 1 second of invincibility after hit
       radius: 12, // Player collision radius
@@ -93,6 +127,9 @@ export function initWorld(seed: number, includeDefaultWeapon = true): WorldState
 
     powerUps: [],
     flamethrowerTime: 0,
+
+    damageNumbers: [],
+    damageNumbersPool,
   };
 }
 

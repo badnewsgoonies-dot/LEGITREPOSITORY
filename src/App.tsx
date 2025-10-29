@@ -13,25 +13,56 @@ import { initAudio } from './core/audio';
 import { renderParticles } from './systems/particles';
 import { applyScreenShake, restoreScreenShake } from './core/screenshake';
 
+import { MainMenu } from './components/MainMenu';
+import { CharacterSelect } from './components/CharacterSelect';
+import { CHARACTERS, getUnlockedCharacters } from './data/characters';
+
 import type { WorldState, Upgrade } from './types';
 
 const INITIAL_SEED = 42;
 
+type GameScreen = 'main-menu' | 'character-select' | 'in-game' | 'settings';
+
 function App() {
   const [worldState, setWorldState] = useState<WorldState | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState<GameScreen>('main-menu');
+  const [selectedCharacterId, setSelectedCharacterId] = useState<string>('antonio');
+  const [fadeOut, setFadeOut] = useState(false);
+
   const loopHandleRef = useRef<ReturnType<typeof start> | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Initialize and start game loop
+  // Initialize systems on mount (but don't start game yet)
   useEffect(() => {
     // Initialize input system
     initInput();
 
-    // Initialize audio system (requires user interaction, but we init context here)
+    // Initialize audio system
     initAudio();
 
-    const initialState = initWorld(INITIAL_SEED);
+    // Cleanup
+    return () => {
+      if (loopHandleRef.current) {
+        loopHandleRef.current.stop();
+      }
+      cleanupInput();
+    };
+  }, []);
+
+  // Start game when entering in-game screen
+  useEffect(() => {
+    if (currentScreen === 'in-game' && !loopHandleRef.current) {
+      startGame();
+    }
+  }, [currentScreen]);
+
+  // Start the game with selected character
+  const startGame = () => {
+    const selectedChar = CHARACTERS[selectedCharacterId];
+    if (!selectedChar) return;
+
+    const initialState = initWorld(INITIAL_SEED, selectedChar);
     setWorldState(initialState);
 
     // Start replay recording
@@ -64,14 +95,7 @@ function App() {
 
     loopHandleRef.current = handle;
     setIsRunning(true);
-
-    // Cleanup
-    return () => {
-      handle.stop();
-      cleanupInput();
-      setIsRunning(false);
-    };
-  }, []);
+  };
 
   // Handle pause/resume
   const togglePause = () => {
@@ -116,6 +140,110 @@ function App() {
     }
   };
 
+  // Screen transition handlers
+  const transitionToScreen = (screen: GameScreen) => {
+    setFadeOut(true);
+    setTimeout(() => {
+      setCurrentScreen(screen);
+      setFadeOut(false);
+    }, 300);
+  };
+
+  const handleStartGame = () => {
+    transitionToScreen('in-game');
+  };
+
+  const handleCharacterSelect = () => {
+    transitionToScreen('character-select');
+  };
+
+  const handleSettings = () => {
+    transitionToScreen('settings');
+  };
+
+  const handleBackToMenu = () => {
+    transitionToScreen('main-menu');
+  };
+
+  const handleCharacterConfirm = () => {
+    transitionToScreen('in-game');
+  };
+
+  // Render main menu
+  if (currentScreen === 'main-menu') {
+    return (
+      <div style={{
+        opacity: fadeOut ? 0 : 1,
+        transition: 'opacity 0.3s ease-in-out'
+      }}>
+        <MainMenu
+          onStart={handleStartGame}
+          onCharacterSelect={handleCharacterSelect}
+          onSettings={handleSettings}
+        />
+      </div>
+    );
+  }
+
+  // Render character select
+  if (currentScreen === 'character-select') {
+    const unlockedChars = getUnlockedCharacters();
+    return (
+      <div style={{
+        opacity: fadeOut ? 0 : 1,
+        transition: 'opacity 0.3s ease-in-out'
+      }}>
+        <CharacterSelect
+          characters={unlockedChars}
+          selectedCharacterId={selectedCharacterId}
+          onSelect={setSelectedCharacterId}
+          onConfirm={handleCharacterConfirm}
+          onBack={handleBackToMenu}
+        />
+      </div>
+    );
+  }
+
+  // Render settings (placeholder for now)
+  if (currentScreen === 'settings') {
+    return (
+      <div style={{
+        opacity: fadeOut ? 0 : 1,
+        transition: 'opacity 0.3s ease-in-out',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a0a0a 50%, #0a0000 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'monospace',
+        color: '#fff',
+      }}>
+        <h1 style={{ color: '#ffd700', fontSize: '48px', marginBottom: '40px' }}>SETTINGS</h1>
+        <p style={{ color: '#aaa', marginBottom: '40px' }}>Settings coming soon...</p>
+        <button
+          onClick={handleBackToMenu}
+          style={{
+            padding: '10px 30px',
+            fontSize: '16px',
+            fontFamily: 'monospace',
+            color: '#ffd700',
+            background: 'transparent',
+            border: '2px solid #ffd700',
+            cursor: 'pointer',
+          }}
+        >
+          ← BACK
+        </button>
+      </div>
+    );
+  }
+
+  // Render in-game screen
   return (
     <div style={{ padding: '20px', fontFamily: 'monospace' }}>
       <h1>Nightfall Survivors - Core Loop Demo</h1>
