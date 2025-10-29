@@ -12,6 +12,7 @@
 import type { Enemy, RNG, Vec2 } from '../types';
 import { nextRange, chance } from '../core/rng';
 import { getWaveConfig, ELITE_MULTIPLIERS } from '../waves/table';
+import { playSound } from '../core/audio';
 
 export interface SpawnResult {
   newEnemies: Enemy[];
@@ -73,6 +74,11 @@ export function stepSpawns(
 
     newEnemies.push(enemy);
     spawnsThisFrame++;
+
+    // Play boss sound for boss spawns
+    if (enemy.kind === 'boss') {
+      playSound('boss', 0.8);
+    }
   }
 
   return {
@@ -177,6 +183,15 @@ function spawnEnemy(
     case 'swarm':
       collisionRadius = 4;
       break;
+    case 'ranged':
+      collisionRadius = 7;
+      break;
+    case 'shielded':
+      collisionRadius = 9;
+      break;
+    case 'boss':
+      collisionRadius = 20; // Much larger
+      break;
     default:
       collisionRadius = 8; // Default fallback
   }
@@ -192,6 +207,18 @@ function spawnEnemy(
     isElite,
     radius: collisionRadius,
   };
+
+  // Initialize special enemy type fields
+  if (enemyConfig.kind === 'ranged') {
+    enemy.shootCooldown = 2.0; // Shoot every 2 seconds
+    enemy.shootTimer = 0;
+    enemy.shootRange = 300; // Max range to shoot
+    enemy.projectileDamage = Math.floor(touchDamage * 1.5); // Slightly higher damage
+  } else if (enemyConfig.kind === 'shielded') {
+    const shieldAmount = Math.floor(hp * 0.5); // Shield has 50% of HP
+    enemy.shieldHp = shieldAmount;
+    enemy.maxShieldHp = shieldAmount;
+  }
 
   return [enemy, currentRng];
 }

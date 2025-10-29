@@ -14,6 +14,9 @@ import { createUpgradePool, createDraft } from '../systems/draft';
 import { applyPlayerRegen, updateWeaponStats } from '../systems/stats';
 import { stepPlayer, getPlayerFacingDirection } from '../systems/player';
 import { getInput } from '../core/input';
+import { stepEnemyAI, stepEnemyProjectiles } from '../systems/enemy-ai';
+import { initParticles, stepParticles } from '../systems/particles';
+import { initScreenShake, updateScreenShake, addTrauma } from '../core/screenshake';
 import type { WorldState } from '../types';
 
 /**
@@ -24,6 +27,7 @@ import type { WorldState } from '../types';
  */
 export function initWorld(seed: number, includeDefaultWeapon = true): WorldState {
   const projectilesPool = makePool(createProjectileFactory(), 512);
+  const particlesPool = initParticles(256);
 
   return {
     seed,
@@ -55,6 +59,7 @@ export function initWorld(seed: number, includeDefaultWeapon = true): WorldState
       : [],
     projectiles: [],
     projectilesPool,
+    enemyProjectiles: [],
     enemies: [],
     spawnAccumulator: 0,
     player: {
@@ -73,6 +78,9 @@ export function initWorld(seed: number, includeDefaultWeapon = true): WorldState
     upgrades: [],
     upgradePool: createUpgradePool(),
     draftChoice: null,
+    particles: [],
+    particlesPool,
+    screenShake: initScreenShake(),
   };
 }
 
@@ -129,6 +137,18 @@ export function updateWorld(state: WorldState): WorldState {
   // Add new enemies to active list
   state.enemies.push(...newEnemies);
 
+  // Add trauma for boss spawns
+  const bossSpawned = newEnemies.some((e) => e.kind === 'boss');
+  if (bossSpawned) {
+    addTrauma(state.screenShake, 0.5);
+  }
+
+  // Update enemy AI (movement, shooting for ranged enemies)
+  currentRng = stepEnemyAI(state);
+
+  // Update enemy projectiles
+  stepEnemyProjectiles(state.dt, state.enemyProjectiles);
+
   // Track enemies before collision to detect kills
   const enemiesBeforeCollision = state.enemies.map((e) => ({
     id: e.id,
@@ -153,6 +173,12 @@ export function updateWorld(state: WorldState): WorldState {
 
   // Update XP system (magnet, collection, level-up)
   const leveledUp = stepXP(state);
+
+  // Update particles
+  stepParticles(state.particles, state.dt, state.particlesPool);
+
+  // Update screen shake
+  updateScreenShake(state.screenShake, state.dt);
 
   // Create draft if player leveled up and no draft is active
   if (leveledUp && state.draftChoice === null && state.gameState === 'playing') {
@@ -183,6 +209,7 @@ export function updateWorld(state: WorldState): WorldState {
     frameCount: state.frameCount + 1,
     rng: currentRng,
     projectiles: state.projectiles, // Reference same array (modified in-place)
+    enemyProjectiles: state.enemyProjectiles, // Reference same array (modified in-place)
     enemies: state.enemies, // Reference same array (modified in-place)
     player: state.player, // Reference same object (modified in-place)
     spawnAccumulator: newAccumulator,
@@ -191,6 +218,9 @@ export function updateWorld(state: WorldState): WorldState {
     upgrades: state.upgrades, // Reference same array (modified in-place)
     upgradePool: state.upgradePool, // Reference same array (modified in-place)
     draftChoice: state.draftChoice, // May be null or active draft
+    particles: state.particles, // Reference same array (modified in-place)
+    particlesPool: state.particlesPool, // Reference same pool
+    screenShake: state.screenShake, // Reference same object (modified in-place)
   };
 }
 

@@ -66,7 +66,7 @@ export interface Pool<T> {
 // Enemy Types
 // ============================================================================
 
-export type EnemyKind = 'zombie' | 'fast' | 'tank' | 'swarm';
+export type EnemyKind = 'zombie' | 'fast' | 'tank' | 'swarm' | 'ranged' | 'shielded' | 'boss';
 
 export interface Enemy {
   id: string;
@@ -78,6 +78,14 @@ export interface Enemy {
   touchDamage: number;
   isElite: boolean;
   radius: number; // collision radius
+  // Ranged enemy fields
+  shootCooldown?: number; // time between shots (seconds)
+  shootTimer?: number; // current cooldown timer
+  shootRange?: number; // max range to shoot at player
+  projectileDamage?: number; // damage dealt by projectiles
+  // Shielded enemy fields
+  shieldHp?: number; // current shield HP
+  maxShieldHp?: number; // maximum shield HP
 }
 
 export interface WaveConfig {
@@ -248,6 +256,25 @@ export interface GameStats {
 // World State
 // ============================================================================
 
+// Forward declare Particle type (defined in particles.ts)
+export interface Particle {
+  active: boolean;
+  pos: Vec2;
+  vel: Vec2;
+  life: number;
+  maxLife: number;
+  size: number;
+  color: string;
+  gravity: number;
+}
+
+// Screen shake state (defined in screenshake.ts)
+export interface ScreenShake {
+  trauma: number;
+  offsetX: number;
+  offsetY: number;
+}
+
 export interface WorldState {
   seed: number;
   time: number; // accumulated time in seconds
@@ -258,8 +285,9 @@ export interface WorldState {
   gameState: GameState; // playing, paused, game_over, victory
   stats: GameStats; // game statistics
   weapons: Weapon[];
-  projectiles: Projectile[];
+  projectiles: Projectile[]; // player projectiles
   projectilesPool: Pool<Projectile>;
+  enemyProjectiles: Projectile[]; // enemy projectiles
   enemies: Enemy[];
   spawnAccumulator: number; // accumulates spawn time
   player: Player;
@@ -268,6 +296,9 @@ export interface WorldState {
   upgrades: Upgrade[]; // currently applied upgrades
   upgradePool: Upgrade[]; // available upgrades for drafting
   draftChoice: DraftChoice | null; // current draft (null if not leveling up)
+  particles: Particle[]; // visual particle effects
+  particlesPool: Pool<Particle>; // particle object pool
+  screenShake: ScreenShake; // camera shake state
 }
 
 // ============================================================================

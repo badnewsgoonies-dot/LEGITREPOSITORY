@@ -8,6 +8,9 @@ import { beginRun, endRun, log, exportRunLog } from './core/replay';
 import { initWorld, updateWorld } from './state/world';
 import { applyUpgrade } from './systems/draft';
 import { initInput, cleanupInput } from './core/input';
+import { initAudio } from './core/audio';
+import { renderParticles } from './systems/particles';
+import { applyScreenShake, restoreScreenShake } from './core/screenshake';
 import type { WorldState, Upgrade } from './types';
 
 const INITIAL_SEED = 42;
@@ -22,6 +25,9 @@ function App() {
   useEffect(() => {
     // Initialize input system
     initInput();
+
+    // Initialize audio system (requires user interaction, but we init context here)
+    initAudio();
 
     const initialState = initWorld(INITIAL_SEED);
     setWorldState(initialState);
@@ -471,6 +477,9 @@ function renderGame(
   ctx.fillStyle = '#111';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // Apply screen shake
+  applyScreenShake(ctx, state.screenShake);
+
   // Draw player
   const playerPos = state.player.pos;
   const hasIframes = state.player.iframes > 0;
@@ -491,9 +500,19 @@ function renderGame(
     ctx.stroke();
   }
 
-  // Draw projectiles
+  // Draw projectiles (player)
   ctx.fillStyle = '#ff0';
   for (const proj of state.projectiles) {
+    if (proj.active) {
+      ctx.beginPath();
+      ctx.arc(proj.pos.x, proj.pos.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Draw enemy projectiles
+  ctx.fillStyle = '#f80';
+  for (const proj of state.enemyProjectiles) {
     if (proj.active) {
       ctx.beginPath();
       ctx.arc(proj.pos.x, proj.pos.y, 3, 0, Math.PI * 2);
@@ -508,13 +527,26 @@ function renderGame(
     if (enemy.kind === 'fast') color = '#ff6600';
     if (enemy.kind === 'tank') color = '#660000';
     if (enemy.kind === 'swarm') color = '#ff9999';
+    if (enemy.kind === 'ranged') color = '#9900ff';
+    if (enemy.kind === 'shielded') color = '#00ccff';
+    if (enemy.kind === 'boss') color = '#cc0000';
     if (enemy.isElite) color = '#ff00ff'; // elite purple
 
     ctx.fillStyle = color;
     ctx.beginPath();
-    const size = enemy.kind === 'tank' ? 8 : enemy.kind === 'swarm' ? 4 : 6;
+    const size = enemy.kind === 'tank' ? 8 : enemy.kind === 'swarm' ? 4 : enemy.kind === 'boss' ? 15 : 6;
     ctx.arc(enemy.pos.x, enemy.pos.y, size, 0, Math.PI * 2);
     ctx.fill();
+
+    // Draw shield indicator for shielded enemies
+    if (enemy.kind === 'shielded' && enemy.shieldHp && enemy.shieldHp > 0) {
+      const shieldPercent = enemy.maxShieldHp ? enemy.shieldHp / enemy.maxShieldHp : 0;
+      ctx.strokeStyle = `rgba(0, 200, 255, ${shieldPercent})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(enemy.pos.x, enemy.pos.y, size + 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     // Draw elite indicator
     if (enemy.isElite) {
@@ -541,7 +573,13 @@ function renderGame(
     ctx.stroke();
   }
 
-  // Debug text
+  // Draw particles
+  renderParticles(ctx, state.particles);
+
+  // Restore screen shake (before UI elements)
+  restoreScreenShake(ctx);
+
+  // Debug text (not affected by shake)
   const minute = Math.floor(state.time / 60);
   ctx.fillStyle = '#0f0';
   ctx.font = '14px monospace';
