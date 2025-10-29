@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris with Power-ups</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+        }
+
+        .game-container {
+            display: flex;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .main-game {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        canvas {
+            border: 3px solid #fff;
+            background: #000;
+            display: block;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            color: white;
+            min-width: 200px;
+        }
+
+        .info-box {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-box .value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .next-piece-canvas {
+            border: 2px solid #fff;
+            background: #000;
+            margin-top: 10px;
+        }
+
+        .power-ups {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .power-up {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .power-up.active {
+            background: rgba(255, 215, 0, 0.4);
+            border: 2px solid gold;
+        }
+
+        .power-up h4 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+        }
+
+        .power-up p {
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .controls h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .game-over {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .game-over.show {
+            display: block;
+        }
+
+        .game-over h2 {
+            margin: 0 0 20px 0;
+            font-size: 36px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="main-game">
+            <canvas id="tetris" width="300" height="600"></canvas>
+        </div>
+
+        <div class="side-panel">
+            <div class="info-box">
+                <h3>Score</h3>
+                <div class="value" id="score">0</div>
+            </div>
+
+            <div class="info-box">
+                <h3>Level</h3>
+                <div class="value" id="level">1</div>
+            </div>
+
+            <div class="info-box">
+                <h3>Lines</h3>
+                <div class="value" id="lines">0</div>
+            </div>
+
+            <div class="info-box">
+                <h3>Next Piece</h3>
+                <canvas id="next-piece" class="next-piece-canvas" width="120" height="120"></canvas>
+            </div>
+
+            <div class="power-ups">
+                <div class="power-up" id="bomb-powerup">
+                    <h4>🔥 LINE BOMB</h4>
+                    <p>Press B - Clears bottom row</p>
+                </div>
+
+                <div class="power-up" id="slowmo-powerup">
+                    <h4>⏱️ SLOW-MO</h4>
+                    <p>Press S - Half speed (10s)</p>
+                </div>
+            </div>
+
+            <div class="controls">
+                <h3>Controls</h3>
+                ← → : Move<br>
+                ↓ : Soft drop<br>
+                ↑ : Rotate<br>
+                Space : Hard drop<br>
+                P : Pause
+            </div>
+
+            <button id="restart-btn">Restart Game</button>
+        </div>
+    </div>
+
+    <div class="game-over" id="game-over">
+        <h2>Game Over!</h2>
+        <p style="font-size: 18px; margin-bottom: 20px;">Final Score: <span id="final-score">0</span></p>
+        <button id="restart-btn-2">Play Again</button>
+    </div>
+
+    <script src="tetris.js"></script>
+</body>
+</html>
