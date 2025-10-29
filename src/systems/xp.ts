@@ -105,7 +105,6 @@ export function collectXPGems(world: WorldState): boolean {
     const radiusSumSq = (playerRadius + gem.radius) * (playerRadius + gem.radius);
 
     if (distSq < radiusSumSq) {
-
       // Spawn pickup particles
       spawnParticleBurst(world.particlesPool, 'pickup', gem.pos, 6);
 
@@ -115,10 +114,8 @@ export function collectXPGems(world: WorldState): boolean {
       world.stats.xpCollected += xpGained;
       world.xpGems.splice(i, 1);
 
-
       // Play pickup sound
       playSound('pickup', 0.4);
-
 
       // Check for level up
       while (world.player.xp >= world.player.xpToNext) {
@@ -127,13 +124,11 @@ export function collectXPGems(world: WorldState): boolean {
         world.player.xpToNext = calculateXPForLevel(world.player.level);
         leveledUp = true;
 
-
         // Spawn levelup particles
         spawnParticleBurst(world.particlesPool, 'levelup', world.player.pos, 20);
 
         // Play levelup sound
         playSound('levelup', 0.7);
-
       }
     }
   }

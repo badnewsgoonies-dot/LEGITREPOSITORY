@@ -731,7 +731,12 @@ function renderGame(
 
     ctx.fillStyle = color;
     ctx.beginPath();
-    const size = enemy.kind === 'tank' ? 8 : enemy.kind === 'swarm' ? 4 : enemy.kind === 'boss' ? 15 : 6;
+    const ENEMY_SIZES: Record<string, number> = {
+      tank: 8,
+      swarm: 4,
+      boss: 15,
+    };
+    const size = ENEMY_SIZES[enemy.kind] ?? 6;
     ctx.arc(enemy.pos.x, enemy.pos.y, size, 0, Math.PI * 2);
     ctx.fill();
 
@@ -789,9 +794,13 @@ function renderGame(
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     let symbol = '?';
-    if (powerUp.type === 'heal') symbol = '+';
-    if (powerUp.type === 'screen_clear') symbol = '⚡';
-    if (powerUp.type === 'flamethrower') symbol = '🔥';
+    if (powerUp.type === 'heal') {
+      symbol = '+';
+    } else if (powerUp.type === 'screen_clear') {
+      symbol = '⚡';
+    } else if (powerUp.type === 'flamethrower') {
+      symbol = '🔥';
+    }
     ctx.fillText(symbol, powerUp.pos.x, powerUp.pos.y);
 
     // Draw pulsing ring
