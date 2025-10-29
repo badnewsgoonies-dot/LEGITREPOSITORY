@@ -35,8 +35,12 @@ function App() {
 
   // Initialize systems on mount (but don't start game yet)
   useEffect(() => {
-    // Initialize input system
-    initInput();
+    // Initialize input system with canvas reference for mouse tracking
+    if (canvasRef.current) {
+      initInput(canvasRef.current);
+    } else {
+      initInput();
+    }
 
     // Initialize audio system
     initAudio();

@@ -3,6 +3,7 @@
  *
  * Features:
  * - WASD movement
+ * - Mouse aiming
  * - Deterministic recording for replay
  * - No direct DOM coupling in game logic
  */
@@ -13,6 +14,8 @@ export interface InputState {
   left: boolean;
   right: boolean;
   pause: boolean;
+  mouseX: number; // Mouse position in canvas coordinates
+  mouseY: number;
 }
 
 let currentInput: InputState = {
@@ -21,12 +24,20 @@ let currentInput: InputState = {
   left: false,
   right: false,
   pause: false,
+  mouseX: 400, // Center of 800x600 canvas
+  mouseY: 300,
 };
+
+let canvasElement: HTMLCanvasElement | null = null;
 
 /**
  * Initialize input listeners (call once on app start)
  */
-export function initInput(): void {
+export function initInput(canvas?: HTMLCanvasElement): void {
+  if (canvas) {
+    canvasElement = canvas;
+    canvas.addEventListener('mousemove', handleMouseMove);
+  }
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('keyup', handleKeyUp);
 }
@@ -35,8 +46,19 @@ export function initInput(): void {
  * Cleanup input listeners
  */
 export function cleanupInput(): void {
+  if (canvasElement) {
+    canvasElement.removeEventListener('mousemove', handleMouseMove);
+  }
   window.removeEventListener('keydown', handleKeyDown);
   window.removeEventListener('keyup', handleKeyUp);
+}
+
+function handleMouseMove(e: MouseEvent): void {
+  if (!canvasElement) return;
+
+  const rect = canvasElement.getBoundingClientRect();
+  currentInput.mouseX = e.clientX - rect.left;
+  currentInput.mouseY = e.clientY - rect.top;
 }
 
 function handleKeyDown(e: KeyboardEvent): void {

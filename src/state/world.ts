@@ -13,7 +13,7 @@ import { stepXP, spawnXPFromKills, calculateXPForLevel } from '../systems/xp';
 import { createUpgradePool, createDraft } from '../systems/draft';
 import { applyPlayerRegen, updateWeaponStats } from '../systems/stats';
 
-import { stepPlayer, getPlayerFacingDirection } from '../systems/player';
+import { stepPlayer, getMouseFacingDirection } from '../systems/player';
 import { getInput } from '../core/input';
 import { stepEnemyAI, stepEnemyProjectiles } from '../systems/enemy-ai';
 import { initParticles, stepParticles } from '../systems/particles';
@@ -174,7 +174,8 @@ export function updateWorld(state: WorldState): WorldState {
 
 
   const playerPos = state.player.pos;
-  const targetDir = getPlayerFacingDirection(state.player, state.enemies);
+  // Use mouse position for weapon aiming
+  const targetDir = getMouseFacingDirection(state.player, input.mouseX, input.mouseY);
 
   // Update weapons and spawn projectiles
   const { newProjectiles, rng: weaponsRng } = stepWeapons(

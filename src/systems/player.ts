@@ -60,7 +60,30 @@ export function stepPlayer(
 }
 
 /**
+ * Get player facing direction based on mouse position
+ */
+export function getMouseFacingDirection(
+  player: Player,
+  mouseX: number,
+  mouseY: number
+): { x: number; y: number } {
+  const dx = mouseX - player.pos.x;
+  const dy = mouseY - player.pos.y;
+  const len = Math.sqrt(dx * dx + dy * dy);
+
+  if (len === 0) {
+    return { x: 1, y: 0 }; // Default: face right
+  }
+
+  return {
+    x: dx / len,
+    y: dy / len,
+  };
+}
+
+/**
  * Get player facing direction (toward nearest enemy or default right)
+ * NOTE: This is kept for backwards compatibility, but mouse aiming is now preferred
  */
 export function getPlayerFacingDirection(
   player: Player,
