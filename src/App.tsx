@@ -1,0 +1,257 @@
+/**
+ * Main App component - integrates game loop with React
+ */
+
+import { useEffect, useRef, useState } from 'react';
+import { start } from './core/loop';
+import { beginRun, endRun, log, exportRunLog } from './core/replay';
+import { initWorld, updateWorld } from './state/world';
+import type { WorldState } from './types';
+
+const INITIAL_SEED = 42;
+
+function App() {
+  const [worldState, setWorldState] = useState<WorldState | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
+  const loopHandleRef = useRef<ReturnType<typeof start> | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Initialize and start game loop
+  useEffect(() => {
+    const initialState = initWorld(INITIAL_SEED);
+    setWorldState(initialState);
+
+    // Start replay recording
+    beginRun(INITIAL_SEED);
+
+    // Start game loop
+    const handle = start(initialState, {
+      targetFPS: 60,
+      maxFrameDelta: 50,
+      onUpdate: (state) => {
+        const updated = updateWorld(state);
+
+        // Log events periodically for demo
+        if (updated.frameCount % 60 === 0) {
+          log({
+            type: 'custom',
+            frame: updated.frameCount,
+            name: 'tick',
+            data: { time: updated.time },
+          });
+        }
+
+        return updated;
+      },
+      onRender: (state, alpha) => {
+        setWorldState(state);
+        renderGame(canvasRef.current, state, alpha);
+      },
+    });
+
+    loopHandleRef.current = handle;
+    setIsRunning(true);
+
+    // Cleanup
+    return () => {
+      handle.stop();
+      setIsRunning(false);
+    };
+  }, []);
+
+  // Handle pause/resume
+  const togglePause = () => {
+    if (loopHandleRef.current) {
+      if (worldState?.isPaused) {
+        loopHandleRef.current.resume();
+      } else {
+        loopHandleRef.current.pause();
+      }
+    }
+  };
+
+  // Export replay
+  const handleExportReplay = () => {
+    if (loopHandleRef.current && worldState) {
+      const currentState = loopHandleRef.current.getState();
+      const runLog = endRun(currentState);
+      const json = exportRunLog(runLog);
+
+      // Download as file
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'replay-sample.json';
+      a.click();
+      URL.revokeObjectURL(url);
+
+      // Restart recording
+      beginRun(INITIAL_SEED);
+    }
+  };
+
+  return (
+    <div style={{ padding: '20px', fontFamily: 'monospace' }}>
+      <h1>Nightfall Survivors - Core Loop Demo</h1>
+
+      {/* Debug HUD */}
+      <div
+        style={{
+          background: '#222',
+          color: '#0f0',
+          padding: '10px',
+          marginBottom: '10px',
+          borderRadius: '4px',
+        }}
+      >
+        <div>Status: {isRunning ? 'Running' : 'Stopped'}</div>
+        <div>Paused: {worldState?.isPaused ? 'Yes' : 'No'}</div>
+        <div>Frame: {worldState?.frameCount ?? 0}</div>
+        <div>
+          Time: {worldState?.time.toFixed(2) ?? 0}s | Minute:{' '}
+          {Math.floor((worldState?.time ?? 0) / 60)}
+        </div>
+        <div>Seed: {worldState?.seed ?? INITIAL_SEED}</div>
+        <div>Weapons: {worldState?.weapons.length ?? 0}</div>
+        <div>Enemies: {worldState?.enemies.length ?? 0}</div>
+        <div>Projectiles: {worldState?.projectiles.length ?? 0}</div>
+        <div>
+          Pool: {worldState?.projectilesPool.available() ?? 0}/
+          {worldState?.projectilesPool.size() ?? 0}
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div style={{ marginBottom: '10px' }}>
+        <button onClick={togglePause} style={{ marginRight: '10px' }}>
+          {worldState?.isPaused ? 'Resume' : 'Pause'}
+        </button>
+        <button onClick={handleExportReplay}>Export Replay</button>
+      </div>
+
+      {/* Canvas for future rendering */}
+      <canvas
+        ref={canvasRef}
+        width={800}
+        height={600}
+        style={{ border: '1px solid #333', background: '#111' }}
+      />
+
+      {/* Info */}
+      <div style={{ marginTop: '20px', fontSize: '12px', color: '#666' }}>
+        <p>
+          <strong>System 1: Core Loop & Deterministic RNG</strong>
+        </p>
+        <p>
+          ✓ Fixed 60Hz timestep
+          <br />
+          ✓ Deterministic xoroshiro128+ RNG
+          <br />
+          ✓ Replay recording system
+          <br />✓ Frame delta clamping (50ms max)
+        </p>
+        <p style={{ marginTop: '10px' }}>
+          <strong>System 3: Weapons & Projectiles</strong>
+        </p>
+        <p>
+          ✓ Object pooling (512 projectiles)
+          <br />
+          ✓ Cooldown accumulator pattern
+          <br />
+          ✓ Deterministic spread angles
+          <br />✓ TTL-based lifecycle
+        </p>
+        <p style={{ marginTop: '10px' }}>
+          <strong>System 4: Enemy Spawner & Waves</strong>
+        </p>
+        <p>
+          ✓ Deterministic wave progression
+          <br />
+          ✓ Weighted enemy type selection
+          <br />
+          ✓ Elite enemies with multipliers
+          <br />✓ Per-frame spawn cap (12 max)
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Simple canvas rendering for visualization.
+ * @param canvas - Canvas element
+ * @param state - World state
+ * @param _alpha - Interpolation factor [0, 1] (unused for now)
+ */
+function renderGame(
+  canvas: HTMLCanvasElement | null,
+  state: WorldState,
+  _alpha: number
+) {
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  // Clear
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw weapon origin (center)
+  ctx.fillStyle = '#0ff';
+  ctx.beginPath();
+  ctx.arc(400, 300, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Draw projectiles
+  ctx.fillStyle = '#ff0';
+  for (const proj of state.projectiles) {
+    if (proj.active) {
+      ctx.beginPath();
+      ctx.arc(proj.pos.x, proj.pos.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Draw enemies
+  for (const enemy of state.enemies) {
+    // Color based on type and elite status
+    let color = '#f00'; // default red
+    if (enemy.kind === 'fast') color = '#ff6600';
+    if (enemy.kind === 'tank') color = '#660000';
+    if (enemy.kind === 'swarm') color = '#ff9999';
+    if (enemy.isElite) color = '#ff00ff'; // elite purple
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    const size = enemy.kind === 'tank' ? 8 : enemy.kind === 'swarm' ? 4 : 6;
+    ctx.arc(enemy.pos.x, enemy.pos.y, size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw elite indicator
+    if (enemy.isElite) {
+      ctx.strokeStyle = '#ffff00';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(enemy.pos.x, enemy.pos.y, size + 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  // Debug text
+  const minute = Math.floor(state.time / 60);
+  ctx.fillStyle = '#0f0';
+  ctx.font = '14px monospace';
+  ctx.fillText(`Frame: ${state.frameCount}`, 10, 20);
+  ctx.fillText(`Time: ${state.time.toFixed(2)}s | Min: ${minute}`, 10, 40);
+  ctx.fillText(`Enemies: ${state.enemies.length}`, 10, 60);
+  ctx.fillText(`Projectiles: ${state.projectiles.length}`, 10, 80);
+  ctx.fillText(
+    `Pool: ${state.projectilesPool.available()}/${state.projectilesPool.size()}`,
+    10,
+    100
+  );
+}
+
+export default App;
