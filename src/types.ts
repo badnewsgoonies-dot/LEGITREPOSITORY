@@ -181,6 +181,7 @@ export type UpgradeType =
   | 'player_hp'
   | 'player_regen'
   | 'xp_magnet'
+
   | 'new_weapon'
   | 'armor'
   | 'projectile_speed'
@@ -190,6 +191,7 @@ export type UpgradeType =
   | 'lifesteal'
   | 'area_damage'
   | 'luck';
+
 
 export interface Upgrade {
   id: string;
@@ -296,9 +298,11 @@ export interface WorldState {
   upgrades: Upgrade[]; // currently applied upgrades
   upgradePool: Upgrade[]; // available upgrades for drafting
   draftChoice: DraftChoice | null; // current draft (null if not leveling up)
+
   particles: Particle[]; // visual particle effects
   particlesPool: Pool<Particle>; // particle object pool
   screenShake: ScreenShake; // camera shake state
+
 }
 
 // ============================================================================

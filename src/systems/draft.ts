@@ -86,6 +86,7 @@ export function createUpgradePool(): Upgrade[] {
       maxLevel: 3,
       currentLevel: 0,
     },
+
     {
       id: 'armor1',
       type: 'armor',
@@ -166,6 +167,7 @@ export function createUpgradePool(): Upgrade[] {
       maxLevel: 3,
       currentLevel: 0,
     },
+
   ];
 }
 

@@ -7,10 +7,12 @@ import { start } from './core/loop';
 import { beginRun, endRun, log, exportRunLog } from './core/replay';
 import { initWorld, updateWorld } from './state/world';
 import { applyUpgrade } from './systems/draft';
+
 import { initInput, cleanupInput } from './core/input';
 import { initAudio } from './core/audio';
 import { renderParticles } from './systems/particles';
 import { applyScreenShake, restoreScreenShake } from './core/screenshake';
+
 import type { WorldState, Upgrade } from './types';
 
 const INITIAL_SEED = 42;
@@ -332,6 +334,7 @@ function App() {
         </div>
       )}
 
+
       {/* Game Over Screen */}
       {worldState?.gameState === 'game_over' && (
         <div
@@ -453,6 +456,7 @@ function App() {
           </div>
         </div>
       )}
+
     </div>
   );
 }
@@ -573,6 +577,7 @@ function renderGame(
     ctx.stroke();
   }
 
+
   // Draw particles
   renderParticles(ctx, state.particles);
 
@@ -580,6 +585,7 @@ function renderGame(
   restoreScreenShake(ctx);
 
   // Debug text (not affected by shake)
+
   const minute = Math.floor(state.time / 60);
   ctx.fillStyle = '#0f0';
   ctx.font = '14px monospace';

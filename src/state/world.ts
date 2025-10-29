@@ -12,11 +12,13 @@ import { stepCollision } from '../systems/collision';
 import { stepXP, spawnXPFromKills, calculateXPForLevel } from '../systems/xp';
 import { createUpgradePool, createDraft } from '../systems/draft';
 import { applyPlayerRegen, updateWeaponStats } from '../systems/stats';
+
 import { stepPlayer, getPlayerFacingDirection } from '../systems/player';
 import { getInput } from '../core/input';
 import { stepEnemyAI, stepEnemyProjectiles } from '../systems/enemy-ai';
 import { initParticles, stepParticles } from '../systems/particles';
 import { initScreenShake, updateScreenShake, addTrauma } from '../core/screenshake';
+
 import type { WorldState } from '../types';
 
 /**
@@ -78,9 +80,11 @@ export function initWorld(seed: number, includeDefaultWeapon = true): WorldState
     upgrades: [],
     upgradePool: createUpgradePool(),
     draftChoice: null,
+
     particles: [],
     particlesPool,
     screenShake: initScreenShake(),
+
   };
 }
 
@@ -100,11 +104,12 @@ export function updateWorld(state: WorldState): WorldState {
   // Update weapon stats based on upgrades
   updateWeaponStats(state);
 
+
   // Update player movement (WASD controls)
   const input = getInput();
   stepPlayer(state.player, input, state.upgrades, state.dt);
 
-  // Get player facing direction (toward nearest enemy)
+
   const playerPos = state.player.pos;
   const targetDir = getPlayerFacingDirection(state.player, state.enemies);
 
@@ -137,6 +142,7 @@ export function updateWorld(state: WorldState): WorldState {
   // Add new enemies to active list
   state.enemies.push(...newEnemies);
 
+
   // Add trauma for boss spawns
   const bossSpawned = newEnemies.some((e) => e.kind === 'boss');
   if (bossSpawned) {
@@ -148,6 +154,7 @@ export function updateWorld(state: WorldState): WorldState {
 
   // Update enemy projectiles
   stepEnemyProjectiles(state.dt, state.enemyProjectiles);
+
 
   // Track enemies before collision to detect kills
   const enemiesBeforeCollision = state.enemies.map((e) => ({
@@ -168,11 +175,14 @@ export function updateWorld(state: WorldState): WorldState {
   // Spawn XP gems for killed enemies
   if (killedEnemies.length > 0) {
     spawnXPFromKills(state, killedEnemies);
+
     state.stats.enemiesKilled += killedEnemies.length;
+
   }
 
   // Update XP system (magnet, collection, level-up)
   const leveledUp = stepXP(state);
+
 
   // Update particles
   stepParticles(state.particles, state.dt, state.particlesPool);
@@ -182,11 +192,13 @@ export function updateWorld(state: WorldState): WorldState {
 
   // Create draft if player leveled up and no draft is active
   if (leveledUp && state.draftChoice === null && state.gameState === 'playing') {
+
     const [draft, draftRng] = createDraft(currentRng, state.upgradePool);
     currentRng = draftRng;
     state.draftChoice = draft;
     state.isPaused = true; // Pause game during draft
   }
+
 
   // Update stats
   state.stats.timeSurvived = state.time;
@@ -218,9 +230,11 @@ export function updateWorld(state: WorldState): WorldState {
     upgrades: state.upgrades, // Reference same array (modified in-place)
     upgradePool: state.upgradePool, // Reference same array (modified in-place)
     draftChoice: state.draftChoice, // May be null or active draft
+
     particles: state.particles, // Reference same array (modified in-place)
     particlesPool: state.particlesPool, // Reference same pool
     screenShake: state.screenShake, // Reference same object (modified in-place)
+
   };
 }
 
