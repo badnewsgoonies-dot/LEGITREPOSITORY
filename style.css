@@ -1,0 +1,207 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+}
+
+.game-container {
+    display: flex;
+    gap: 30px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+}
+
+.game-info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 250px;
+}
+
+.game-info h1 {
+    font-size: 42px;
+    text-align: center;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+    letter-spacing: 5px;
+}
+
+.info-panel {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+    font-size: 18px;
+}
+
+.label {
+    font-weight: bold;
+}
+
+.value {
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.next-piece-container {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.next-piece-container h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+#next-piece-canvas {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+}
+
+.power-ups {
+    background: rgba(255, 100, 100, 0.2);
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 100, 100, 0.5);
+}
+
+.power-ups h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+    text-align: center;
+}
+
+.power-up-item {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+    font-size: 18px;
+}
+
+.hint {
+    text-align: center;
+    font-size: 14px;
+    margin-top: 8px;
+    color: #ffaaaa;
+}
+
+.controls {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.controls h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.controls p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.restart-btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+}
+
+.restart-btn:hover {
+    background: #45a049;
+    transform: scale(1.05);
+}
+
+.game-board-container {
+    position: relative;
+}
+
+#game-canvas {
+    background: #000;
+    border: 3px solid #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+.game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.95);
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    border: 3px solid #ff4444;
+    min-width: 250px;
+}
+
+.game-over h2 {
+    font-size: 36px;
+    color: #ff4444;
+    margin-bottom: 20px;
+}
+
+.game-over p {
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+#restart-game-over {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#restart-game-over:hover {
+    background: #45a049;
+    transform: scale(1.05);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Animation for line clear */
+@keyframes lineFlash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* Animation for bomb explosion */
+@keyframes bombExplode {
+    0% { opacity: 1; background-color: rgba(255, 0, 0, 0.8); }
+    50% { opacity: 0.5; background-color: rgba(255, 255, 0, 0.8); }
+    100% { opacity: 0; background-color: rgba(255, 255, 255, 0); }
+}
