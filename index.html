@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris with Power-ups</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="main-area">
+            <canvas id="gameCanvas" width="300" height="600"></canvas>
+            <div id="gameOver" class="game-over hidden">
+                <h2>GAME OVER</h2>
+                <p>Score: <span id="finalScore">0</span></p>
+                <button id="restartBtn">Restart</button>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <div class="info-section">
+                <h3>Score</h3>
+                <div id="score">0</div>
+            </div>
+
+            <div class="info-section">
+                <h3>Level</h3>
+                <div id="level">1</div>
+            </div>
+
+            <div class="info-section">
+                <h3>Lines</h3>
+                <div id="lines">0</div>
+            </div>
+
+            <div class="info-section">
+                <h3>Next Piece</h3>
+                <canvas id="nextPieceCanvas" width="120" height="120"></canvas>
+            </div>
+
+            <div class="info-section power-ups">
+                <h3>Power-ups</h3>
+                <div id="powerUpInventory"></div>
+            </div>
+
+            <div class="info-section active-effects">
+                <h3>Active Effects</h3>
+                <div id="activeEffects"></div>
+            </div>
+
+            <div class="info-section controls">
+                <h3>Controls</h3>
+                <p>← → : Move</p>
+                <p>↑ : Rotate</p>
+                <p>↓ : Soft Drop</p>
+                <p>SPACE : Hard Drop</p>
+                <p>1/2/3 : Use Power-up</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="tetris.js"></script>
+</body>
+</html>
