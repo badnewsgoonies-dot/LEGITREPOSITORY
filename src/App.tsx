@@ -110,6 +110,12 @@ function App() {
         <div>Frame: {worldState?.frameCount ?? 0}</div>
         <div>Time: {worldState?.time.toFixed(2) ?? 0}s</div>
         <div>Seed: {worldState?.seed ?? INITIAL_SEED}</div>
+        <div>Weapons: {worldState?.weapons.length ?? 0}</div>
+        <div>Projectiles: {worldState?.projectiles.length ?? 0}</div>
+        <div>
+          Pool: {worldState?.projectilesPool.available() ?? 0}/
+          {worldState?.projectilesPool.size() ?? 0}
+        </div>
       </div>
 
       {/* Controls */}
@@ -141,6 +147,17 @@ function App() {
           ✓ Replay recording system
           <br />✓ Frame delta clamping (50ms max)
         </p>
+        <p style={{ marginTop: '10px' }}>
+          <strong>System 3: Weapons & Projectiles</strong>
+        </p>
+        <p>
+          ✓ Object pooling (512 projectiles)
+          <br />
+          ✓ Cooldown accumulator pattern
+          <br />
+          ✓ Deterministic spread angles
+          <br />✓ TTL-based lifecycle
+        </p>
       </div>
     </div>
   );
@@ -150,12 +167,12 @@ function App() {
  * Simple canvas rendering for visualization.
  * @param canvas - Canvas element
  * @param state - World state
- * @param alpha - Interpolation factor [0, 1]
+ * @param _alpha - Interpolation factor [0, 1] (unused for now)
  */
 function renderGame(
   canvas: HTMLCanvasElement | null,
   state: WorldState,
-  alpha: number
+  _alpha: number
 ) {
   if (!canvas) return;
 
@@ -166,21 +183,33 @@ function renderGame(
   ctx.fillStyle = '#111';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Draw a simple animated element to prove the loop works
-  const x = (state.time * 100) % canvas.width;
-  const y = canvas.height / 2 + Math.sin(state.time * 2) * 50;
-
-  ctx.fillStyle = '#0f0';
+  // Draw weapon origin (center)
+  ctx.fillStyle = '#0ff';
   ctx.beginPath();
-  ctx.arc(x, y, 10, 0, Math.PI * 2);
+  ctx.arc(400, 300, 8, 0, Math.PI * 2);
   ctx.fill();
+
+  // Draw projectiles
+  ctx.fillStyle = '#ff0';
+  for (const proj of state.projectiles) {
+    if (proj.active) {
+      ctx.beginPath();
+      ctx.arc(proj.pos.x, proj.pos.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 
   // Debug text
   ctx.fillStyle = '#0f0';
   ctx.font = '14px monospace';
   ctx.fillText(`Frame: ${state.frameCount}`, 10, 20);
   ctx.fillText(`Time: ${state.time.toFixed(2)}s`, 10, 40);
-  ctx.fillText(`Alpha: ${alpha.toFixed(3)}`, 10, 60);
+  ctx.fillText(`Projectiles: ${state.projectiles.length}`, 10, 60);
+  ctx.fillText(
+    `Pool: ${state.projectilesPool.available()}/${state.projectilesPool.size()}`,
+    10,
+    80
+  );
 }
 
 export default App;

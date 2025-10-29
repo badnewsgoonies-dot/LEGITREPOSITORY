@@ -12,7 +12,8 @@
     "test:run": "vitest run",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "generate-replay": "tsx scripts/generate-replay.ts",
-    "measure-perf": "tsx scripts/measure-perf.ts"
+    "measure-perf": "tsx scripts/measure-perf.ts",
+    "measure-projectiles": "tsx scripts/measure-projectiles-perf.ts"
   },
   "dependencies": {
     "pure-rand": "^6.1.0",

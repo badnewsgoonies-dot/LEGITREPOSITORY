@@ -21,6 +21,39 @@ export interface Rect {
 }
 
 // ============================================================================
+// Weapons & Projectiles Types
+// ============================================================================
+
+export interface Weapon {
+  id: string;
+  type: string;
+  damage: number;
+  cooldown: number; // seconds between shots
+  cooldownTimer: number; // accumulator, fires when ≤ 0
+  projectileSpeed: number;
+  projectileCount: number; // projectiles per shot
+  spreadAngle: number; // degrees
+  ttl: number; // projectile time-to-live in seconds
+}
+
+export interface Projectile {
+  active: boolean;
+  pos: Vec2;
+  dir: Vec2; // normalized direction vector
+  speed: number;
+  damage: number;
+  ttl: number; // time remaining in seconds
+  ownerId?: string; // for collision filtering
+}
+
+export interface Pool<T> {
+  take: () => T | null;
+  put: (item: T) => void;
+  size: () => number;
+  available: () => number;
+}
+
+// ============================================================================
 // RNG Types
 // ============================================================================
 
@@ -61,6 +94,9 @@ export interface WorldState {
   frameCount: number;
   rng: RNG;
   isPaused: boolean;
+  weapons: Weapon[];
+  projectiles: Projectile[];
+  projectilesPool: Pool<Projectile>;
 }
 
 // ============================================================================
