@@ -19,6 +19,12 @@ import { stepEnemyAI, stepEnemyProjectiles } from '../systems/enemy-ai';
 import { initParticles, stepParticles } from '../systems/particles';
 import { initScreenShake, updateScreenShake, addTrauma } from '../core/screenshake';
 
+import {
+  checkPowerUpSpawns,
+  stepPowerUps,
+  collectPowerUps,
+  updateFlamethrower,
+} from '../systems/powerups';
 import type { WorldState } from '../types';
 
 /**
@@ -85,6 +91,8 @@ export function initWorld(seed: number, includeDefaultWeapon = true): WorldState
     particlesPool,
     screenShake: initScreenShake(),
 
+    powerUps: [],
+    flamethrowerTime: 0,
   };
 }
 
@@ -120,7 +128,8 @@ export function updateWorld(state: WorldState): WorldState {
     currentRng,
     state.projectilesPool,
     playerPos,
-    targetDir
+    targetDir,
+    state.flamethrowerTime > 0 // Has flamethrower buff
   );
   currentRng = weaponsRng;
 
@@ -178,7 +187,18 @@ export function updateWorld(state: WorldState): WorldState {
 
     state.stats.enemiesKilled += killedEnemies.length;
 
+    // Check for power-up spawns from elite kills
+    currentRng = checkPowerUpSpawns(state, killedEnemies);
   }
+
+  // Update power-ups (lifetime decay)
+  stepPowerUps(state.powerUps, state.dt);
+
+  // Collect power-ups
+  collectPowerUps(state);
+
+  // Update flamethrower buff
+  updateFlamethrower(state, state.dt);
 
   // Update XP system (magnet, collection, level-up)
   const leveledUp = stepXP(state);
@@ -235,6 +255,8 @@ export function updateWorld(state: WorldState): WorldState {
     particlesPool: state.particlesPool, // Reference same pool
     screenShake: state.screenShake, // Reference same object (modified in-place)
 
+    powerUps: state.powerUps, // Reference same array (modified in-place)
+    flamethrowerTime: state.flamethrowerTime, // Updated flamethrower time
   };
 }
 

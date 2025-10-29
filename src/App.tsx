@@ -577,6 +577,38 @@ function renderGame(
     ctx.stroke();
   }
 
+  // Draw power-ups
+  for (const powerUp of state.powerUps) {
+    // Color based on type
+    let color = '#fff';
+    if (powerUp.type === 'heal') color = '#ff6b9d'; // Pink
+    if (powerUp.type === 'screen_clear') color = '#ffd700'; // Gold
+    if (powerUp.type === 'flamethrower') color = '#ff4500'; // Orange-red
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(powerUp.pos.x, powerUp.pos.y, powerUp.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw icon or symbol
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 12px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    let symbol = '?';
+    if (powerUp.type === 'heal') symbol = '+';
+    if (powerUp.type === 'screen_clear') symbol = '⚡';
+    if (powerUp.type === 'flamethrower') symbol = '🔥';
+    ctx.fillText(symbol, powerUp.pos.x, powerUp.pos.y);
+
+    // Draw pulsing ring
+    const pulseSize = powerUp.radius + 2 + Math.sin(state.time * 3) * 2;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(powerUp.pos.x, powerUp.pos.y, pulseSize, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 
   // Draw particles
   renderParticles(ctx, state.particles);
@@ -603,6 +635,17 @@ function renderGame(
     10,
     120
   );
+
+  // Flamethrower buff indicator
+  if (state.flamethrowerTime > 0) {
+    ctx.fillStyle = '#ff4500';
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText(
+      `🔥 FLAMETHROWER: ${state.flamethrowerTime.toFixed(1)}s 🔥`,
+      10,
+      150
+    );
+  }
 }
 
 export default App;

@@ -33,33 +33,40 @@ export function stepWeapons(
   rng: RNG,
   pool: Pool<Projectile>,
   ownerPos: Vec2,
-  targetDir: Vec2
+  targetDir: Vec2,
+  hasFlamethrower: boolean = false
 ): WeaponStepResult {
   let currentRng = rng;
   const newProjectiles: Projectile[] = [];
 
   for (const weapon of weapons) {
-    // Update cooldown timer
-    weapon.cooldownTimer -= dt;
+    // Update cooldown timer (faster when flamethrower active)
+    const cooldownMultiplier = hasFlamethrower ? 3.0 : 1.0;
+    weapon.cooldownTimer -= dt * cooldownMultiplier;
 
     // Fire if ready
     if (weapon.cooldownTimer <= 0) {
       // Reset cooldown
       weapon.cooldownTimer = weapon.cooldown;
 
-      // Spawn projectiles
-      const [projectiles, nextRng] = fireWeapon(
-        weapon,
-        currentRng,
-        pool,
-        ownerPos,
-        targetDir
-      );
-      currentRng = nextRng;
-      newProjectiles.push(...projectiles);
+      // Spawn projectiles (more with flamethrower)
+      const projectileMultiplier = hasFlamethrower ? 3 : 1;
+
+      for (let i = 0; i < projectileMultiplier; i++) {
+        const [projectiles, nextRng] = fireWeapon(
+          weapon,
+          currentRng,
+          pool,
+          ownerPos,
+          targetDir,
+          hasFlamethrower
+        );
+        currentRng = nextRng;
+        newProjectiles.push(...projectiles);
+      }
 
       // Play shoot sound
-      if (projectiles.length > 0) {
+      if (newProjectiles.length > 0) {
         playSound('shoot', 0.2);
       }
     }
@@ -86,7 +93,8 @@ function fireWeapon(
   rng: RNG,
   pool: Pool<Projectile>,
   pos: Vec2,
-  baseDir: Vec2
+  baseDir: Vec2,
+  hasFlamethrower: boolean = false
 ): [Projectile[], RNG] {
   let currentRng = rng;
   const projectiles: Projectile[] = [];
@@ -144,7 +152,8 @@ function fireWeapon(
     projectile.pos = { ...pos };
     projectile.dir = dir;
     projectile.speed = weapon.projectileSpeed;
-    projectile.damage = weapon.damage;
+    // Flamethrower doubles damage
+    projectile.damage = hasFlamethrower ? weapon.damage * 2 : weapon.damage;
     projectile.ttl = weapon.ttl;
     projectile.ownerId = weapon.id;
     projectile.radius = 3; // Collision radius

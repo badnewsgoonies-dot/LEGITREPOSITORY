@@ -277,6 +277,17 @@ export interface ScreenShake {
   offsetY: number;
 }
 
+// Power-up types (defined in powerups.ts)
+export type PowerUpType = 'heal' | 'screen_clear' | 'flamethrower';
+
+export interface PowerUp {
+  id: string;
+  type: PowerUpType;
+  pos: Vec2;
+  radius: number;
+  lifetime: number;
+}
+
 export interface WorldState {
   seed: number;
   time: number; // accumulated time in seconds
@@ -303,6 +314,8 @@ export interface WorldState {
   particlesPool: Pool<Particle>; // particle object pool
   screenShake: ScreenShake; // camera shake state
 
+  powerUps: PowerUp[]; // power-up items in world
+  flamethrowerTime: number; // remaining flamethrower buff time (seconds)
 }
 
 // ============================================================================
