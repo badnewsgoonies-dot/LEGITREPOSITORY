@@ -1,0 +1,59 @@
+{
+  "seed": 42,
+  "events": [
+    {
+      "type": "input",
+      "frame": 0,
+      "action": "game_start"
+    },
+    {
+      "type": "input",
+      "frame": 30,
+      "action": "move_right"
+    },
+    {
+      "type": "input",
+      "frame": 45,
+      "action": "shoot"
+    },
+    {
+      "type": "input",
+      "frame": 60,
+      "action": "move_left"
+    },
+    {
+      "type": "custom",
+      "frame": 60,
+      "name": "second_tick",
+      "data": {
+        "second": 1
+      }
+    },
+    {
+      "type": "input",
+      "frame": 90,
+      "action": "shoot"
+    },
+    {
+      "type": "input",
+      "frame": 120,
+      "action": "move_up"
+    },
+    {
+      "type": "custom",
+      "frame": 120,
+      "name": "second_tick",
+      "data": {
+        "second": 2
+      }
+    },
+    {
+      "type": "input",
+      "frame": 150,
+      "action": "shoot"
+    }
+  ],
+  "finalHash": "392b90e7",
+  "frameCount": 180,
+  "timestamp": 329.919368
+}
