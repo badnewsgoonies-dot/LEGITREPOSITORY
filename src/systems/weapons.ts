@@ -195,6 +195,16 @@ function fireWeapon(
     projectile.ttl = finalTTL;
     projectile.ownerId = weapon.id;
     projectile.radius = finalRadius;
+    projectile.behavior = weapon.behavior;
+
+    // Setup behavior-specific fields
+    if (weapon.behavior === 'boomerang') {
+      projectile.returnTarget = { ...pos }; // Return to launch position
+      projectile.isReturning = false;
+    } else if (weapon.behavior === 'orbit') {
+      projectile.orbitAngle = Math.random() * Math.PI * 2; // Random starting angle
+      projectile.orbitCenter = { ...pos };
+    }
 
     projectiles.push(projectile);
   }

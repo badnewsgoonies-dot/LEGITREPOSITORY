@@ -590,6 +590,68 @@ function App() {
 }
 
 /**
+ * Draw 16-bit themed background with grass tiles
+ */
+function draw16BitBackground(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  const tileSize = 32; // 16-bit style tile size
+  const tilesX = Math.ceil(width / tileSize);
+  const tilesY = Math.ceil(height / tileSize);
+
+  // Base grass color
+  const grassColors = ['#2d5016', '#3a6b1e', '#2a4815', '#356118'];
+
+  for (let y = 0; y < tilesY; y++) {
+    for (let x = 0; x < tilesX; x++) {
+      // Choose grass color based on position (deterministic pattern)
+      const colorIndex = (x * 3 + y * 7) % grassColors.length;
+      ctx.fillStyle = grassColors[colorIndex];
+      ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+
+      // Add some darker grass detail lines (pixel art style)
+      if ((x + y) % 3 === 0) {
+        ctx.fillStyle = '#1a3010';
+        ctx.fillRect(x * tileSize + 4, y * tileSize + 4, 2, 2);
+        ctx.fillRect(x * tileSize + 20, y * tileSize + 16, 2, 2);
+      }
+      if ((x + y) % 4 === 1) {
+        ctx.fillStyle = '#1a3010';
+        ctx.fillRect(x * tileSize + 12, y * tileSize + 24, 3, 2);
+      }
+    }
+  }
+
+  // Draw stone path/spawn area in center (lighter color)
+  const centerX = Math.floor(width / 2);
+  const centerY = Math.floor(height / 2);
+  const pathSize = 120;
+
+  // Stone tiles
+  const stoneColors = ['#5a5a5a', '#666666', '#4f4f4f', '#707070'];
+  for (let dy = -pathSize / 2; dy < pathSize / 2; dy += tileSize / 2) {
+    for (let dx = -pathSize / 2; dx < pathSize / 2; dx += tileSize / 2) {
+      const colorIndex = Math.floor(Math.abs(dx + dy)) % stoneColors.length;
+      ctx.fillStyle = stoneColors[colorIndex];
+      ctx.fillRect(centerX + dx, centerY + dy, tileSize / 2, tileSize / 2);
+
+      // Stone cracks (detail)
+      ctx.strokeStyle = '#3a3a3a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(centerX + dx + 2, centerY + dy + 2);
+      ctx.lineTo(centerX + dx + 10, centerY + dy + 8);
+      ctx.stroke();
+    }
+  }
+
+  // Draw border (decorative stone wall)
+  ctx.fillStyle = '#3a3a3a';
+  ctx.fillRect(0, 0, width, 8); // Top
+  ctx.fillRect(0, height - 8, width, 8); // Bottom
+  ctx.fillRect(0, 0, 8, height); // Left
+  ctx.fillRect(width - 8, 0, 8, height); // Right
+}
+
+/**
  * Simple canvas rendering for visualization.
  * @param canvas - Canvas element
  * @param state - World state
@@ -605,9 +667,8 @@ function renderGame(
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  // Clear
-  ctx.fillStyle = '#111';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Draw 16-bit themed background
+  draw16BitBackground(ctx, canvas.width, canvas.height);
 
   // Apply screen shake
   applyScreenShake(ctx, state.screenShake);

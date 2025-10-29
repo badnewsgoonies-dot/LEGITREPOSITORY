@@ -76,6 +76,7 @@ export interface Projectile {
   ttl: number; // time remaining in seconds
   ownerId?: string; // for collision filtering
   radius: number; // collision radius
+  behavior?: WeaponBehavior; // projectile behavior type
   // Boomerang specific
   isReturning?: boolean;
   returnTarget?: Vec2; // position to return to

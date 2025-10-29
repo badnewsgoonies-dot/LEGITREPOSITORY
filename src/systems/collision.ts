@@ -390,12 +390,15 @@ export function updateIframes(player: Player, dt: number): void {
  * @param world - World state (mutated)
  * @returns Damage events
  */
-export function stepCollision(world: WorldState): DamageEvent[] {
+export function stepCollision(world: WorldState, additionalContacts: Contact[] = []): DamageEvent[] {
   // Update i-frames
   updateIframes(world.player, world.dt);
 
   // Detect collisions
   const contacts = detectCollisions(world);
+
+  // Add additional contacts (from direct weapons like aura/melee/lightning)
+  contacts.push(...additionalContacts);
 
   // Resolve collisions
   const damageEvents = resolveCollisions(world, contacts);

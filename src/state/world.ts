@@ -26,6 +26,7 @@ import {
   collectPowerUps,
   updateFlamethrower,
 } from '../systems/powerups';
+import { processDirectWeapons } from '../systems/direct-weapons';
 import type { WorldState } from '../types';
 import type { CharacterDefinition } from '../data/characters';
 import { WEAPON_DEFINITIONS, createWeaponFromDef } from '../systems/weapon-library';
@@ -192,8 +193,8 @@ export function updateWorld(state: WorldState): WorldState {
   // Add new projectiles to active list
   state.projectiles.push(...newProjectiles);
 
-  // Update existing projectiles
-  stepProjectiles(state.dt, state.projectiles, state.projectilesPool);
+  // Update existing projectiles (pass player pos for orbit behavior)
+  stepProjectiles(state.dt, state.projectiles, state.projectilesPool, playerPos);
 
   // Spawn enemies based on wave progression
   const minute = getMinute(state.time);
@@ -222,6 +223,14 @@ export function updateWorld(state: WorldState): WorldState {
   // Update enemy projectiles
   stepEnemyProjectiles(state.dt, state.enemyProjectiles);
 
+  // Process direct weapons (aura, melee, lightning)
+  const directWeaponContacts = processDirectWeapons(
+    state.weapons,
+    state.enemies,
+    playerPos,
+    targetDir,
+    state.dt
+  );
 
   // Track enemies before collision to detect kills
   const enemiesBeforeCollision = state.enemies.map((e) => ({
@@ -230,8 +239,8 @@ export function updateWorld(state: WorldState): WorldState {
     isElite: e.isElite,
   }));
 
-  // Handle collisions (damage & knockback)
-  const newDamageEvents = stepCollision(state);
+  // Handle collisions (damage & knockback) including direct weapon contacts
+  const newDamageEvents = stepCollision(state, directWeaponContacts);
   state.damageEvents.push(...newDamageEvents);
 
   // Find killed enemies (those that were alive before but not in the list now)
