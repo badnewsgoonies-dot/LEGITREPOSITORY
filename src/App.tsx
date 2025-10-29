@@ -7,6 +7,7 @@ import { start } from './core/loop';
 import { beginRun, endRun, log, exportRunLog } from './core/replay';
 import { initWorld, updateWorld } from './state/world';
 import { applyUpgrade } from './systems/draft';
+import { initInput, cleanupInput } from './core/input';
 import type { WorldState, Upgrade } from './types';
 
 const INITIAL_SEED = 42;
@@ -19,6 +20,9 @@ function App() {
 
   // Initialize and start game loop
   useEffect(() => {
+    // Initialize input system
+    initInput();
+
     const initialState = initWorld(INITIAL_SEED);
     setWorldState(initialState);
 
@@ -56,6 +60,7 @@ function App() {
     // Cleanup
     return () => {
       handle.stop();
+      cleanupInput();
       setIsRunning(false);
     };
   }, []);

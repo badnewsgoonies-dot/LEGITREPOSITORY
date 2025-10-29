@@ -12,6 +12,8 @@ import { stepCollision } from '../systems/collision';
 import { stepXP, spawnXPFromKills, calculateXPForLevel } from '../systems/xp';
 import { createUpgradePool, createDraft } from '../systems/draft';
 import { applyPlayerRegen, updateWeaponStats } from '../systems/stats';
+import { stepPlayer, getPlayerFacingDirection } from '../systems/player';
+import { getInput } from '../core/input';
 import type { WorldState } from '../types';
 
 /**
@@ -82,9 +84,13 @@ export function updateWorld(state: WorldState): WorldState {
   // Update weapon stats based on upgrades
   updateWeaponStats(state);
 
-  // Player position and direction for demo
+  // Update player movement (WASD controls)
+  const input = getInput();
+  stepPlayer(state.player, input, state.upgrades, state.dt);
+
+  // Get player facing direction (toward nearest enemy)
   const playerPos = state.player.pos;
-  const targetDir = { x: 1, y: 0 }; // Fire to the right
+  const targetDir = getPlayerFacingDirection(state.player, state.enemies);
 
   // Update weapons and spawn projectiles
   const { newProjectiles, rng: weaponsRng } = stepWeapons(

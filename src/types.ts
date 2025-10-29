@@ -13,6 +13,14 @@ export interface Vec2 {
   y: number;
 }
 
+export interface InputState {
+  up: boolean;
+  down: boolean;
+  left: boolean;
+  right: boolean;
+  pause: boolean;
+}
+
 export interface Rect {
   x: number;
   y: number;
@@ -165,7 +173,15 @@ export type UpgradeType =
   | 'player_hp'
   | 'player_regen'
   | 'xp_magnet'
-  | 'new_weapon';
+  | 'new_weapon'
+  | 'armor'
+  | 'projectile_speed'
+  | 'projectile_size'
+  | 'crit_chance'
+  | 'pierce'
+  | 'lifesteal'
+  | 'area_damage'
+  | 'luck';
 
 export interface Upgrade {
   id: string;
