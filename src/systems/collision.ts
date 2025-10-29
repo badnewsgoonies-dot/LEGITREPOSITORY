@@ -18,6 +18,9 @@ import type {
   Circle,
   Player,
 } from '../types';
+import { playSound } from '../core/audio';
+import { spawnParticleBurst } from '../systems/particles';
+import { addTrauma } from '../core/screenshake';
 
 // Constants
 const KNOCKBACK_MAGNITUDE = 50; // pixels per collision
@@ -118,7 +121,7 @@ export function calculateKnockback(posA: Vec2, posB: Vec2, magnitude: number): V
 export function detectCollisions(world: WorldState): Contact[] {
   const contacts: Contact[] = [];
 
-  // Projectile vs Enemy collisions
+  // Player Projectile vs Enemy collisions
   for (const proj of world.projectiles) {
     if (!proj.active) continue;
 
@@ -143,7 +146,32 @@ export function detectCollisions(world: WorldState): Contact[] {
     }
   }
 
-  // Enemy vs Player collisions
+  // Enemy Projectile vs Player collisions
+  for (const proj of world.enemyProjectiles) {
+    if (!proj.active) continue;
+
+    const projCircle: Circle = { x: proj.pos.x, y: proj.pos.y, radius: proj.radius };
+    const playerCircle: Circle = {
+      x: world.player.pos.x,
+      y: world.player.pos.y,
+      radius: world.player.radius,
+    };
+
+    if (checkCircle(projCircle, playerCircle)) {
+      contacts.push({
+        type: 'enemy-player',
+        entityA: `enemy_projectile_${world.enemyProjectiles.indexOf(proj)}`,
+        entityB: 'player',
+        damage: proj.damage,
+        knockback: calculateKnockback(proj.pos, world.player.pos, KNOCKBACK_MAGNITUDE),
+      });
+
+      // Mark projectile as inactive (will be removed)
+      proj.active = false;
+    }
+  }
+
+  // Enemy vs Player collisions (melee)
   for (const enemy of world.enemies) {
     const enemyCircle: Circle = { x: enemy.pos.x, y: enemy.pos.y, radius: enemy.radius };
     const playerCircle: Circle = {
@@ -181,7 +209,23 @@ export function resolveCollisions(world: WorldState, contacts: Contact[]): Damag
       // Apply damage to enemy
       const enemy = world.enemies.find((e) => e.id === contact.entityB);
       if (enemy && contact.damage) {
-        enemy.hp -= contact.damage;
+        let damageToApply = contact.damage;
+
+        // Handle shield mechanics for shielded enemies
+        if (enemy.kind === 'shielded' && enemy.shieldHp && enemy.shieldHp > 0) {
+          // Damage shield first
+          const shieldDamage = Math.min(enemy.shieldHp, damageToApply);
+          enemy.shieldHp -= shieldDamage;
+          damageToApply -= shieldDamage;
+
+          // If shield is depleted, apply remaining damage to HP
+          if (damageToApply > 0) {
+            enemy.hp -= damageToApply;
+          }
+        } else {
+          // Normal damage
+          enemy.hp -= damageToApply;
+        }
 
         damageEvents.push({
           frame: world.frameCount,
@@ -200,8 +244,19 @@ export function resolveCollisions(world: WorldState, contacts: Contact[]): Damag
         if (enemy.hp <= 0) {
           const index = world.enemies.indexOf(enemy);
           if (index !== -1) {
+            // Spawn death particles
+            spawnParticleBurst(world.particlesPool, 'death', enemy.pos, 12);
+
             world.enemies.splice(index, 1);
+            // Play kill sound
+            playSound(enemy.kind === 'boss' ? 'boss' : 'kill', 0.5);
           }
+        } else {
+          // Spawn hit particles
+          spawnParticleBurst(world.particlesPool, 'hit', enemy.pos, 4);
+
+          // Play hit sound
+          playSound('hit', 0.3);
         }
       }
     } else if (contact.type === 'enemy-player') {
@@ -216,6 +271,12 @@ export function resolveCollisions(world: WorldState, contacts: Contact[]): Damag
           damage: contact.damage,
           source: 'enemy',
         });
+
+        // Play damage sound
+        playSound('damage', 0.6);
+
+        // Add screen shake
+        addTrauma(world.screenShake, 0.3);
 
         // Apply knockback to player
         if (contact.knockback) {

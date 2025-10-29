@@ -13,6 +13,14 @@ export interface Vec2 {
   y: number;
 }
 
+export interface InputState {
+  up: boolean;
+  down: boolean;
+  left: boolean;
+  right: boolean;
+  pause: boolean;
+}
+
 export interface Rect {
   x: number;
   y: number;
@@ -58,7 +66,7 @@ export interface Pool<T> {
 // Enemy Types
 // ============================================================================
 
-export type EnemyKind = 'zombie' | 'fast' | 'tank' | 'swarm';
+export type EnemyKind = 'zombie' | 'fast' | 'tank' | 'swarm' | 'ranged' | 'shielded' | 'boss';
 
 export interface Enemy {
   id: string;
@@ -70,6 +78,14 @@ export interface Enemy {
   touchDamage: number;
   isElite: boolean;
   radius: number; // collision radius
+  // Ranged enemy fields
+  shootCooldown?: number; // time between shots (seconds)
+  shootTimer?: number; // current cooldown timer
+  shootRange?: number; // max range to shoot at player
+  projectileDamage?: number; // damage dealt by projectiles
+  // Shielded enemy fields
+  shieldHp?: number; // current shield HP
+  maxShieldHp?: number; // maximum shield HP
 }
 
 export interface WaveConfig {
@@ -165,7 +181,17 @@ export type UpgradeType =
   | 'player_hp'
   | 'player_regen'
   | 'xp_magnet'
-  | 'new_weapon';
+
+  | 'new_weapon'
+  | 'armor'
+  | 'projectile_speed'
+  | 'projectile_size'
+  | 'crit_chance'
+  | 'pierce'
+  | 'lifesteal'
+  | 'area_damage'
+  | 'luck';
+
 
 export interface Upgrade {
   id: string;
@@ -215,8 +241,41 @@ export interface RunLog {
 }
 
 // ============================================================================
+// Game State
+// ============================================================================
+
+export type GameState = 'playing' | 'paused' | 'game_over' | 'victory';
+
+export interface GameStats {
+  enemiesKilled: number;
+  damageDealt: number;
+  damageTaken: number;
+  xpCollected: number;
+  timeSurvived: number;
+}
+
+// ============================================================================
 // World State
 // ============================================================================
+
+// Forward declare Particle type (defined in particles.ts)
+export interface Particle {
+  active: boolean;
+  pos: Vec2;
+  vel: Vec2;
+  life: number;
+  maxLife: number;
+  size: number;
+  color: string;
+  gravity: number;
+}
+
+// Screen shake state (defined in screenshake.ts)
+export interface ScreenShake {
+  trauma: number;
+  offsetX: number;
+  offsetY: number;
+}
 
 export interface WorldState {
   seed: number;
@@ -225,9 +284,12 @@ export interface WorldState {
   frameCount: number;
   rng: RNG;
   isPaused: boolean;
+  gameState: GameState; // playing, paused, game_over, victory
+  stats: GameStats; // game statistics
   weapons: Weapon[];
-  projectiles: Projectile[];
+  projectiles: Projectile[]; // player projectiles
   projectilesPool: Pool<Projectile>;
+  enemyProjectiles: Projectile[]; // enemy projectiles
   enemies: Enemy[];
   spawnAccumulator: number; // accumulates spawn time
   player: Player;
@@ -236,6 +298,11 @@ export interface WorldState {
   upgrades: Upgrade[]; // currently applied upgrades
   upgradePool: Upgrade[]; // available upgrades for drafting
   draftChoice: DraftChoice | null; // current draft (null if not leveling up)
+
+  particles: Particle[]; // visual particle effects
+  particlesPool: Pool<Particle>; // particle object pool
+  screenShake: ScreenShake; // camera shake state
+
 }
 
 // ============================================================================

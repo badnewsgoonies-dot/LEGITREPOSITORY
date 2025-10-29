@@ -51,7 +51,7 @@ export const WAVE_TABLE: WaveConfig[] = [
     ],
   },
 
-  // Minute 2-3: More variety
+  // Minute 2-3: More variety, introduce ranged
   {
     minute: 2,
     spawnRate: 4,
@@ -59,21 +59,28 @@ export const WAVE_TABLE: WaveConfig[] = [
     enemies: [
       {
         kind: 'zombie',
-        weight: 50,
+        weight: 40,
         hp: 15,
         speed: 50,
         touchDamage: 6,
       },
       {
         kind: 'fast',
-        weight: 35,
+        weight: 30,
         hp: 8,
         speed: 90,
         touchDamage: 4,
       },
       {
+        kind: 'ranged',
+        weight: 20,
+        hp: 12,
+        speed: 30,
+        touchDamage: 3,
+      },
+      {
         kind: 'swarm',
-        weight: 15,
+        weight: 10,
         hp: 4,
         speed: 60,
         touchDamage: 2,
@@ -81,7 +88,7 @@ export const WAVE_TABLE: WaveConfig[] = [
     ],
   },
 
-  // Minute 3-4: Introduce tanks
+  // Minute 3-4: Introduce tanks and shielded
   {
     minute: 3,
     spawnRate: 5,
@@ -89,14 +96,14 @@ export const WAVE_TABLE: WaveConfig[] = [
     enemies: [
       {
         kind: 'zombie',
-        weight: 40,
+        weight: 30,
         hp: 18,
         speed: 55,
         touchDamage: 7,
       },
       {
         kind: 'fast',
-        weight: 30,
+        weight: 25,
         hp: 10,
         speed: 100,
         touchDamage: 5,
@@ -109,16 +116,23 @@ export const WAVE_TABLE: WaveConfig[] = [
         touchDamage: 15,
       },
       {
-        kind: 'swarm',
+        kind: 'ranged',
+        weight: 15,
+        hp: 14,
+        speed: 35,
+        touchDamage: 4,
+      },
+      {
+        kind: 'shielded',
         weight: 10,
-        hp: 5,
-        speed: 70,
-        touchDamage: 2,
+        hp: 20,
+        speed: 45,
+        touchDamage: 8,
       },
     ],
   },
 
-  // Minute 4-5: Ramping up
+  // Minute 4-5: Ramping up, introduce boss
   {
     minute: 4,
     spawnRate: 6,
@@ -126,36 +140,50 @@ export const WAVE_TABLE: WaveConfig[] = [
     enemies: [
       {
         kind: 'zombie',
-        weight: 35,
+        weight: 30,
         hp: 22,
         speed: 60,
         touchDamage: 8,
       },
       {
         kind: 'fast',
-        weight: 30,
+        weight: 25,
         hp: 12,
         speed: 110,
         touchDamage: 6,
       },
       {
         kind: 'tank',
-        weight: 25,
+        weight: 20,
         hp: 60,
         speed: 30,
         touchDamage: 18,
       },
       {
-        kind: 'swarm',
+        kind: 'ranged',
+        weight: 12,
+        hp: 16,
+        speed: 40,
+        touchDamage: 5,
+      },
+      {
+        kind: 'shielded',
         weight: 10,
-        hp: 6,
-        speed: 80,
-        touchDamage: 3,
+        hp: 25,
+        speed: 50,
+        touchDamage: 10,
+      },
+      {
+        kind: 'boss',
+        weight: 3,
+        hp: 150,
+        speed: 20,
+        touchDamage: 25,
       },
     ],
   },
 
-  // Minute 5+: Maximum difficulty (repeated)
+  // Minute 5+: Maximum difficulty (all enemy types)
   {
     minute: 5,
     spawnRate: 8,
@@ -163,31 +191,52 @@ export const WAVE_TABLE: WaveConfig[] = [
     enemies: [
       {
         kind: 'zombie',
-        weight: 30,
+        weight: 25,
         hp: 25,
         speed: 65,
         touchDamage: 10,
       },
       {
         kind: 'fast',
-        weight: 30,
+        weight: 20,
         hp: 15,
         speed: 120,
         touchDamage: 7,
       },
       {
         kind: 'tank',
-        weight: 30,
+        weight: 20,
         hp: 70,
         speed: 35,
         touchDamage: 20,
       },
       {
+        kind: 'ranged',
+        weight: 15,
+        hp: 18,
+        speed: 45,
+        touchDamage: 6,
+      },
+      {
+        kind: 'shielded',
+        weight: 12,
+        hp: 30,
+        speed: 55,
+        touchDamage: 12,
+      },
+      {
         kind: 'swarm',
-        weight: 10,
+        weight: 5,
         hp: 8,
         speed: 90,
         touchDamage: 4,
+      },
+      {
+        kind: 'boss',
+        weight: 3,
+        hp: 200,
+        speed: 25,
+        touchDamage: 30,
       },
     ],
   },

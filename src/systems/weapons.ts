@@ -9,6 +9,7 @@
 
 import type { Weapon, Projectile, RNG, Pool, Vec2 } from '../types';
 import { nextRange } from '../core/rng';
+import { playSound } from '../core/audio';
 
 export interface WeaponStepResult {
   newProjectiles: Projectile[];
@@ -56,6 +57,11 @@ export function stepWeapons(
       );
       currentRng = nextRng;
       newProjectiles.push(...projectiles);
+
+      // Play shoot sound
+      if (projectiles.length > 0) {
+        playSound('shoot', 0.2);
+      }
     }
   }
 

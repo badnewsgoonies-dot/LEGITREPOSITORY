@@ -10,6 +10,10 @@
 
 import type { WorldState, XPGem, Vec2 } from '../types';
 
+import { playSound } from '../core/audio';
+import { spawnParticleBurst } from '../systems/particles';
+
+
 // Constants
 const BASE_XP_VALUE = 5;
 const GEM_RADIUS = 4;
@@ -101,9 +105,18 @@ export function collectXPGems(world: WorldState): boolean {
     const radiusSumSq = (playerRadius + gem.radius) * (playerRadius + gem.radius);
 
     if (distSq < radiusSumSq) {
+
+      // Spawn pickup particles
+      spawnParticleBurst(world.particlesPool, 'pickup', gem.pos, 6);
+
       // Collect gem
       world.player.xp += gem.value;
       world.xpGems.splice(i, 1);
+
+
+      // Play pickup sound
+      playSound('pickup', 0.4);
+
 
       // Check for level up
       while (world.player.xp >= world.player.xpToNext) {
@@ -111,6 +124,14 @@ export function collectXPGems(world: WorldState): boolean {
         world.player.level++;
         world.player.xpToNext = calculateXPForLevel(world.player.level);
         leveledUp = true;
+
+
+        // Spawn levelup particles
+        spawnParticleBurst(world.particlesPool, 'levelup', world.player.pos, 20);
+
+        // Play levelup sound
+        playSound('levelup', 0.7);
+
       }
     }
   }
