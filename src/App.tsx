@@ -39,7 +39,8 @@ function App() {
     if (canvasRef.current) {
       initInput(canvasRef.current);
     } else {
-      initInput();
+      console.warn('canvasRef.current is null during input initialization. Mouse tracking will not work.');
+      return;
     }
 
     // Initialize audio system
