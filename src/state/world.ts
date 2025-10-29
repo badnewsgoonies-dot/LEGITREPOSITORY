@@ -9,6 +9,9 @@ import { createProjectileFactory, stepProjectiles } from '../systems/projectiles
 import { stepWeapons, createWeapon } from '../systems/weapons';
 import { stepSpawns, getMinute } from '../systems/spawn';
 import { stepCollision } from '../systems/collision';
+import { stepXP, spawnXPFromKills, calculateXPForLevel } from '../systems/xp';
+import { createUpgradePool, createDraft } from '../systems/draft';
+import { applyPlayerRegen, updateWeaponStats } from '../systems/stats';
 import type { WorldState } from '../types';
 
 /**
@@ -51,8 +54,15 @@ export function initWorld(seed: number, includeDefaultWeapon = true): WorldState
       iframes: 0,
       iframeDuration: 1.0, // 1 second of invincibility after hit
       radius: 12, // Player collision radius
+      xp: 0,
+      level: 1,
+      xpToNext: calculateXPForLevel(1),
     },
     damageEvents: [],
+    xpGems: [],
+    upgrades: [],
+    upgradePool: createUpgradePool(),
+    draftChoice: null,
   };
 }
 
@@ -65,6 +75,12 @@ export function initWorld(seed: number, includeDefaultWeapon = true): WorldState
  */
 export function updateWorld(state: WorldState): WorldState {
   let currentRng = state.rng;
+
+  // Apply player regeneration
+  applyPlayerRegen(state);
+
+  // Update weapon stats based on upgrades
+  updateWeaponStats(state);
 
   // Player position and direction for demo
   const playerPos = state.player.pos;
@@ -99,9 +115,37 @@ export function updateWorld(state: WorldState): WorldState {
   // Add new enemies to active list
   state.enemies.push(...newEnemies);
 
+  // Track enemies before collision to detect kills
+  const enemiesBeforeCollision = state.enemies.map((e) => ({
+    id: e.id,
+    pos: { ...e.pos },
+    isElite: e.isElite,
+  }));
+
   // Handle collisions (damage & knockback)
   const newDamageEvents = stepCollision(state);
   state.damageEvents.push(...newDamageEvents);
+
+  // Find killed enemies (those that were alive before but not in the list now)
+  const killedEnemies = enemiesBeforeCollision.filter(
+    (before) => !state.enemies.some((after) => after.id === before.id)
+  );
+
+  // Spawn XP gems for killed enemies
+  if (killedEnemies.length > 0) {
+    spawnXPFromKills(state, killedEnemies);
+  }
+
+  // Update XP system (magnet, collection, level-up)
+  const leveledUp = stepXP(state);
+
+  // Create draft if player leveled up and no draft is active
+  if (leveledUp && state.draftChoice === null) {
+    const [draft, draftRng] = createDraft(currentRng, state.upgradePool);
+    currentRng = draftRng;
+    state.draftChoice = draft;
+    state.isPaused = true; // Pause game during draft
+  }
 
   return {
     ...state,
@@ -113,6 +157,10 @@ export function updateWorld(state: WorldState): WorldState {
     player: state.player, // Reference same object (modified in-place)
     spawnAccumulator: newAccumulator,
     damageEvents: state.damageEvents, // Reference same array (modified in-place)
+    xpGems: state.xpGems, // Reference same array (modified in-place)
+    upgrades: state.upgrades, // Reference same array (modified in-place)
+    upgradePool: state.upgradePool, // Reference same array (modified in-place)
+    draftChoice: state.draftChoice, // May be null or active draft
   };
 }
 
@@ -123,7 +171,6 @@ export function updateWorld(state: WorldState): WorldState {
  */
 export function debugWorld(state: WorldState): string {
   const activeProj = state.projectiles.length;
-  const poolAvail = state.projectilesPool.available();
   const minute = getMinute(state.time);
   return `Frame ${state.frameCount} | Time ${state.time.toFixed(2)}s | Min: ${minute} | HP: ${state.player.hp}/${state.player.maxHp} | Enemies: ${state.enemies.length} | Projectiles: ${activeProj}`;
 }
