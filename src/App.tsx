@@ -35,13 +35,8 @@ function App() {
 
   // Initialize systems on mount (but don't start game yet)
   useEffect(() => {
-    // Initialize input system with canvas reference for mouse tracking
-    if (canvasRef.current) {
-      initInput(canvasRef.current);
-    } else {
-      console.warn('canvasRef.current is null during input initialization. Mouse tracking will not work.');
-      return;
-    }
+    // Initialize input system (keyboard only initially)
+    initInput();
 
     // Initialize audio system
     initAudio();
@@ -54,6 +49,16 @@ function App() {
       cleanupInput();
     };
   }, []);
+
+  // Add mouse tracking when canvas is available (in-game screen)
+  useEffect(() => {
+    if (currentScreen === 'in-game' && canvasRef.current) {
+      // Re-initialize with canvas for mouse tracking
+      // Need to cleanup first to avoid duplicate listeners
+      cleanupInput();
+      initInput(canvasRef.current);
+    }
+  }, [currentScreen]);
 
   // Start game when entering in-game screen
   useEffect(() => {
