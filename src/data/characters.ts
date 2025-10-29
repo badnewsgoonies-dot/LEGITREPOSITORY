@@ -187,7 +187,7 @@ export function getCharacter(id: string): CharacterDefinition | undefined {
  * Get all unlocked characters
  */
 export function getUnlockedCharacters(): CharacterDefinition[] {
-  return Object.values(CHARACTERS).filter(c => c.unlocked);
+  return Object.values(CHARACTERS).filter((c) => c.unlocked);
 }
 
 /**

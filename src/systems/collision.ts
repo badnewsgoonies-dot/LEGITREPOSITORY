@@ -174,7 +174,8 @@ export function detectCollisions(world: WorldState): Contact[] {
   }
 
   // Enemy Projectile vs Player collisions
-  for (const proj of world.enemyProjectiles) {
+  for (let i = 0; i < world.enemyProjectiles.length; i++) {
+    const proj = world.enemyProjectiles[i];
     if (!proj.active) continue;
 
     const projCircle: Circle = { x: proj.pos.x, y: proj.pos.y, radius: proj.radius };
@@ -187,7 +188,7 @@ export function detectCollisions(world: WorldState): Contact[] {
     if (checkCircle(projCircle, playerCircle)) {
       contacts.push({
         type: 'enemy-player',
-        entityA: `enemy_projectile_${world.enemyProjectiles.indexOf(proj)}`,
+        entityA: `enemy_projectile_${i}`,
         entityB: 'player',
         damage: proj.damage,
         knockback: calculateKnockback(proj.pos, world.player.pos, KNOCKBACK_MAGNITUDE),

@@ -10,6 +10,8 @@ import type { WaveConfig } from '../types';
 /**
  * Wave configurations per minute.
  * Each minute has different enemy mixes and spawn rates.
+ * 
+ * Note: Enemy weights within each minute should sum to 100 for consistent spawn distribution.
  */
 export const WAVE_TABLE: WaveConfig[] = [
   // Minute 0-1: Tutorial, easy zombies

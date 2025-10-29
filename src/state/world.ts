@@ -31,6 +31,11 @@ import type { CharacterDefinition } from '../data/characters';
 import { WEAPON_DEFINITIONS, createWeaponFromDef } from '../systems/weapon-library';
 
 /**
+ * Victory time in seconds (20 minutes)
+ */
+const VICTORY_TIME_SECONDS = 1200;
+
+/**
  * Initialize a new world state with the given seed.
  * @param seed - RNG seed for determinism
  * @param character - Character definition (optional, uses default if not provided)
@@ -285,7 +290,7 @@ export function updateWorld(state: WorldState): WorldState {
   state.stats.timeSurvived = state.time;
 
   // Check victory condition (20 minutes = 1200 seconds)
-  if (state.time >= 1200 && state.gameState === 'playing') {
+  if (state.time >= VICTORY_TIME_SECONDS && state.gameState === 'playing') {
     state.gameState = 'victory';
     state.isPaused = true;
   }
