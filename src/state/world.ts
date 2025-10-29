@@ -32,6 +32,14 @@ export function initWorld(seed: number, includeDefaultWeapon = true): WorldState
     frameCount: 0,
     rng: mkRng(seed),
     isPaused: false,
+    gameState: 'playing',
+    stats: {
+      enemiesKilled: 0,
+      damageDealt: 0,
+      damageTaken: 0,
+      xpCollected: 0,
+      timeSurvived: 0,
+    },
     weapons: includeDefaultWeapon
       ? [
           createWeapon('default', {
@@ -140,17 +148,33 @@ export function updateWorld(state: WorldState): WorldState {
   // Spawn XP gems for killed enemies
   if (killedEnemies.length > 0) {
     spawnXPFromKills(state, killedEnemies);
+    state.stats.enemiesKilled += killedEnemies.length;
   }
 
   // Update XP system (magnet, collection, level-up)
   const leveledUp = stepXP(state);
 
   // Create draft if player leveled up and no draft is active
-  if (leveledUp && state.draftChoice === null) {
+  if (leveledUp && state.draftChoice === null && state.gameState === 'playing') {
     const [draft, draftRng] = createDraft(currentRng, state.upgradePool);
     currentRng = draftRng;
     state.draftChoice = draft;
     state.isPaused = true; // Pause game during draft
+  }
+
+  // Update stats
+  state.stats.timeSurvived = state.time;
+
+  // Check victory condition (20 minutes = 1200 seconds)
+  if (state.time >= 1200 && state.gameState === 'playing') {
+    state.gameState = 'victory';
+    state.isPaused = true;
+  }
+
+  // Check death condition
+  if (state.player.hp <= 0 && state.gameState === 'playing') {
+    state.gameState = 'game_over';
+    state.isPaused = true;
   }
 
   return {

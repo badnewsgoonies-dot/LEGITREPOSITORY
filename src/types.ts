@@ -231,6 +231,20 @@ export interface RunLog {
 }
 
 // ============================================================================
+// Game State
+// ============================================================================
+
+export type GameState = 'playing' | 'paused' | 'game_over' | 'victory';
+
+export interface GameStats {
+  enemiesKilled: number;
+  damageDealt: number;
+  damageTaken: number;
+  xpCollected: number;
+  timeSurvived: number;
+}
+
+// ============================================================================
 // World State
 // ============================================================================
 
@@ -241,6 +255,8 @@ export interface WorldState {
   frameCount: number;
   rng: RNG;
   isPaused: boolean;
+  gameState: GameState; // playing, paused, game_over, victory
+  stats: GameStats; // game statistics
   weapons: Weapon[];
   projectiles: Projectile[];
   projectilesPool: Pool<Projectile>;

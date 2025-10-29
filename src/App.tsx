@@ -325,6 +325,128 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Game Over Screen */}
+      {worldState?.gameState === 'game_over' && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: '#222',
+              padding: '40px',
+              borderRadius: '10px',
+              border: '3px solid #f00',
+              textAlign: 'center',
+              maxWidth: '500px',
+            }}
+          >
+            <h1 style={{ color: '#f00', marginTop: 0, fontSize: '48px' }}>
+              GAME OVER
+            </h1>
+            <div style={{ color: '#aaa', marginBottom: '30px' }}>
+              <p style={{ fontSize: '20px' }}>
+                You survived {Math.floor(worldState.stats.timeSurvived / 60)}{' '}
+                minutes {Math.floor(worldState.stats.timeSurvived % 60)} seconds
+              </p>
+              <div style={{ fontSize: '16px', lineHeight: '1.8' }}>
+                <div>Level: {worldState.player.level}</div>
+                <div>Enemies Killed: {worldState.stats.enemiesKilled}</div>
+                <div>Upgrades: {worldState.upgrades.length}</div>
+              </div>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '15px 40px',
+                fontSize: '18px',
+                background: '#f00',
+                border: 'none',
+                borderRadius: '5px',
+                color: '#fff',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.background = '#ff3333')}
+              onMouseOut={(e) => (e.currentTarget.style.background = '#f00')}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Victory Screen */}
+      {worldState?.gameState === 'victory' && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 20, 0, 0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: '#222',
+              padding: '40px',
+              borderRadius: '10px',
+              border: '3px solid #0f0',
+              textAlign: 'center',
+              maxWidth: '500px',
+            }}
+          >
+            <h1 style={{ color: '#0f0', marginTop: 0, fontSize: '48px' }}>
+              VICTORY!
+            </h1>
+            <div style={{ color: '#aaa', marginBottom: '30px' }}>
+              <p style={{ fontSize: '20px', color: '#0f0' }}>
+                You survived all 20 minutes!
+              </p>
+              <div style={{ fontSize: '16px', lineHeight: '1.8' }}>
+                <div>Final Level: {worldState.player.level}</div>
+                <div>Enemies Killed: {worldState.stats.enemiesKilled}</div>
+                <div>Upgrades Collected: {worldState.upgrades.length}</div>
+                <div>Final HP: {worldState.player.hp}/{worldState.player.maxHp}</div>
+              </div>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '15px 40px',
+                fontSize: '18px',
+                background: '#0f0',
+                border: 'none',
+                borderRadius: '5px',
+                color: '#000',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.background = '#3f3')}
+              onMouseOut={(e) => (e.currentTarget.style.background = '#0f0')}
+            >
+              Play Again
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
