@@ -616,36 +616,99 @@ function renderGame(
   // Restore screen shake (before UI elements)
   restoreScreenShake(ctx);
 
-  // Debug text (not affected by shake)
+  // ========== PROPER GAME HUD ==========
 
+  // Health Bar (top left)
+  const hpPercent = state.player.hp / state.player.maxHp;
+  const hpBarWidth = 200;
+  const hpBarHeight = 20;
+  const hpBarX = 10;
+  const hpBarY = 10;
+
+  // HP bar background
+  ctx.fillStyle = '#222';
+  ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+
+  // HP bar fill
+  const hpColor = hpPercent > 0.5 ? '#0f0' : hpPercent > 0.25 ? '#ff0' : '#f00';
+  ctx.fillStyle = hpColor;
+  ctx.fillRect(hpBarX, hpBarY, hpBarWidth * hpPercent, hpBarHeight);
+
+  // HP bar border
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+
+  // HP text
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 12px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(
+    `HP: ${state.player.hp}/${state.player.maxHp}`,
+    hpBarX + hpBarWidth / 2,
+    hpBarY + hpBarHeight / 2
+  );
+
+  // XP Bar (below HP)
+  const xpPercent = state.player.xp / state.player.xpToNext;
+  const xpBarY = hpBarY + hpBarHeight + 5;
+
+  // XP bar background
+  ctx.fillStyle = '#222';
+  ctx.fillRect(hpBarX, xpBarY, hpBarWidth, hpBarHeight);
+
+  // XP bar fill
+  ctx.fillStyle = '#00d4ff';
+  ctx.fillRect(hpBarX, xpBarY, hpBarWidth * xpPercent, hpBarHeight);
+
+  // XP bar border
+  ctx.strokeStyle = '#fff';
+  ctx.strokeRect(hpBarX, xpBarY, hpBarWidth, hpBarHeight);
+
+  // XP text
+  ctx.fillStyle = '#fff';
+  ctx.fillText(
+    `XP: ${state.player.xp}/${state.player.xpToNext}`,
+    hpBarX + hpBarWidth / 2,
+    xpBarY + hpBarHeight / 2
+  );
+
+  // Level Display (top left, above bars)
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 24px monospace';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(`LV ${state.player.level}`, hpBarX, hpBarY - 30);
+
+  // Timer (top center)
   const minute = Math.floor(state.time / 60);
-  ctx.fillStyle = '#0f0';
-  ctx.font = '14px monospace';
-  ctx.fillText(`Frame: ${state.frameCount}`, 10, 20);
-  ctx.fillText(`Time: ${state.time.toFixed(2)}s | Min: ${minute}`, 10, 40);
-  ctx.fillText(
-    `Player HP: ${state.player.hp}/${state.player.maxHp}${hasIframes ? ' [INVINCIBLE]' : ''}`,
-    10,
-    60
-  );
-  ctx.fillText(`Enemies: ${state.enemies.length}`, 10, 80);
-  ctx.fillText(`Projectiles: ${state.projectiles.length}`, 10, 100);
-  ctx.fillText(
-    `Pool: ${state.projectilesPool.available()}/${state.projectilesPool.size()}`,
-    10,
-    120
-  );
+  const second = Math.floor(state.time % 60);
+  const timerText = `${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}`;
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 32px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(timerText, canvas.width / 2, 10);
 
-  // Flamethrower buff indicator
+  // Kills Counter (top right)
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 18px monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(`Kills: ${state.stats.enemiesKilled}`, canvas.width - 10, 10);
+
+  // Flamethrower buff indicator (centered)
   if (state.flamethrowerTime > 0) {
     ctx.fillStyle = '#ff4500';
-    ctx.font = 'bold 20px monospace';
+    ctx.font = 'bold 24px monospace';
+    ctx.textAlign = 'center';
     ctx.fillText(
       `🔥 FLAMETHROWER: ${state.flamethrowerTime.toFixed(1)}s 🔥`,
-      10,
-      150
+      canvas.width / 2,
+      60
     );
   }
+
 }
 
 export default App;

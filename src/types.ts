@@ -32,9 +32,21 @@ export interface Rect {
 // Weapons & Projectiles Types
 // ============================================================================
 
+export type WeaponBehavior =
+  | 'projectile'    // Standard projectile (magic wand, knife)
+  | 'boomerang'     // Returns to player (axe)
+  | 'aura'          // Damage aura around player (garlic)
+  | 'orbit'         // Projectiles orbit player (bible)
+  | 'melee'         // Sweeping arc (whip)
+  | 'lightning';    // Chain lightning
+
 export interface Weapon {
   id: string;
+  name: string;
   type: string;
+  behavior: WeaponBehavior;
+  level: number;
+  maxLevel: number;
   damage: number;
   cooldown: number; // seconds between shots
   cooldownTimer: number; // accumulator, fires when ≤ 0
@@ -42,6 +54,17 @@ export interface Weapon {
   projectileCount: number; // projectiles per shot
   spreadAngle: number; // degrees
   ttl: number; // projectile time-to-live in seconds
+  // AOE/Aura specific
+  auraRadius?: number;
+  // Orbit specific
+  orbitRadius?: number;
+  orbitSpeed?: number;
+  // Melee specific
+  meleeArc?: number; // degrees of sweep
+  meleeRange?: number;
+  // Lightning specific
+  chainCount?: number; // how many enemies to chain
+  chainRange?: number; // max distance between chain targets
 }
 
 export interface Projectile {
@@ -53,6 +76,15 @@ export interface Projectile {
   ttl: number; // time remaining in seconds
   ownerId?: string; // for collision filtering
   radius: number; // collision radius
+  // Boomerang specific
+  isReturning?: boolean;
+  returnTarget?: Vec2; // position to return to
+  // Orbit specific
+  orbitAngle?: number; // current orbit angle
+  orbitCenter?: Vec2; // what to orbit around
+  // Pierce specific
+  pierceCount?: number; // how many enemies it can pierce
+  pierced?: Set<string>; // enemies already hit
 }
 
 export interface Pool<T> {
@@ -288,6 +320,17 @@ export interface PowerUp {
   lifetime: number;
 }
 
+// Damage numbers (defined in damage-numbers.ts)
+export interface DamageNumber {
+  active: boolean;
+  pos: Vec2;
+  damage: number;
+  lifetime: number;
+  maxLifetime: number;
+  velocity: Vec2;
+  isCrit: boolean;
+}
+
 export interface WorldState {
   seed: number;
   time: number; // accumulated time in seconds
@@ -316,6 +359,8 @@ export interface WorldState {
 
   powerUps: PowerUp[]; // power-up items in world
   flamethrowerTime: number; // remaining flamethrower buff time (seconds)
+  damageNumbers: DamageNumber[]; // floating damage text
+  damageNumbersPool: Pool<DamageNumber>; // damage number object pool
 }
 
 // ============================================================================

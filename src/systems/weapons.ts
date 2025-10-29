@@ -177,7 +177,11 @@ export function createWeapon(
 ): Weapon {
   return {
     id,
+    name: 'Basic Weapon',
     type: 'basic',
+    behavior: 'projectile',
+    level: 1,
+    maxLevel: 8,
     damage: 10,
     cooldown: 0.5,
     cooldownTimer: 0, // Ready to fire immediately
