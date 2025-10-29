@@ -35,6 +35,10 @@ let canvasElement: HTMLCanvasElement | null = null;
  */
 export function initInput(canvas?: HTMLCanvasElement): void {
   if (canvas) {
+    // Remove listener from previous canvas if different
+    if (canvasElement && canvasElement !== canvas) {
+      canvasElement.removeEventListener('mousemove', handleMouseMove);
+    }
     canvasElement = canvas;
     canvas.addEventListener('mousemove', handleMouseMove);
   }
