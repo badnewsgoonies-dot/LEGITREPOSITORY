@@ -61,6 +61,7 @@ export function createProjectileFactory(): () => Projectile {
     speed: 0,
     damage: 0,
     ttl: 0,
+    radius: 3, // Default collision radius
   });
 }
 

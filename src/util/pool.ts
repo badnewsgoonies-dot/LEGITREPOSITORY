@@ -16,13 +16,9 @@ import type { Pool } from '../types';
  * @returns Pool interface with take/put methods
  */
 export function makePool<T>(factory: () => T, size = 512): Pool<T> {
-  const available: T[] = [];
+  const free: T[] = Array.from({ length: size }, factory);
+  const used: T[] = [];
   const total = size;
-
-  // Pre-allocate all objects
-  for (let i = 0; i < size; i++) {
-    available.push(factory());
-  }
 
   return {
     /**
@@ -30,16 +26,21 @@ export function makePool<T>(factory: () => T, size = 512): Pool<T> {
      * Returns null if pool is exhausted.
      */
     take: (): T | null => {
-      return available.pop() ?? null;
+      const item = free.pop() ?? null;
+      if (item !== null) {
+        used.push(item);
+      }
+      return item;
     },
 
     /**
      * Return an object to the pool.
-     * Silently ignores if pool is full.
      */
-    put: (item: T): void => {
-      if (available.length < total) {
-        available.push(item);
+    put: (o: T): void => {
+      const idx = used.indexOf(o);
+      if (idx !== -1) {
+        used.splice(idx, 1);
+        free.push(o);
       }
     },
 
@@ -54,7 +55,7 @@ export function makePool<T>(factory: () => T, size = 512): Pool<T> {
      * Get number of available objects.
      */
     available: (): number => {
-      return available.length;
+      return free.length;
     },
   };
 }

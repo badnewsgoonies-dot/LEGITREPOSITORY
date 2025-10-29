@@ -141,6 +141,7 @@ function fireWeapon(
     projectile.damage = weapon.damage;
     projectile.ttl = weapon.ttl;
     projectile.ownerId = weapon.id;
+    projectile.radius = 3; // Collision radius
 
     projectiles.push(projectile);
   }

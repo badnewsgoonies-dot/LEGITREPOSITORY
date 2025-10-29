@@ -113,6 +113,10 @@ function App() {
           {Math.floor((worldState?.time ?? 0) / 60)}
         </div>
         <div>Seed: {worldState?.seed ?? INITIAL_SEED}</div>
+        <div>
+          Player HP: {worldState?.player.hp ?? 0}/{worldState?.player.maxHp ?? 0}
+          {(worldState?.player.iframes ?? 0) > 0 && ' [INVINCIBLE]'}
+        </div>
         <div>Weapons: {worldState?.weapons.length ?? 0}</div>
         <div>Enemies: {worldState?.enemies.length ?? 0}</div>
         <div>Projectiles: {worldState?.projectiles.length ?? 0}</div>
@@ -120,6 +124,7 @@ function App() {
           Pool: {worldState?.projectilesPool.available() ?? 0}/
           {worldState?.projectilesPool.size() ?? 0}
         </div>
+        <div>Damage Events: {worldState?.damageEvents.length ?? 0}</div>
       </div>
 
       {/* Controls */}
@@ -173,6 +178,17 @@ function App() {
           ✓ Elite enemies with multipliers
           <br />✓ Per-frame spawn cap (12 max)
         </p>
+        <p style={{ marginTop: '10px' }}>
+          <strong>System 5: Collision, Damage & Knockback</strong>
+        </p>
+        <p>
+          ✓ Circle collision detection
+          <br />
+          ✓ Player i-frame system (1.0s immunity)
+          <br />
+          ✓ Knockback mechanics
+          <br />✓ Damage event logging
+        </p>
       </div>
     </div>
   );
@@ -198,11 +214,25 @@ function renderGame(
   ctx.fillStyle = '#111';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Draw weapon origin (center)
-  ctx.fillStyle = '#0ff';
+  // Draw player
+  const playerPos = state.player.pos;
+  const hasIframes = state.player.iframes > 0;
+
+  // Player body
+  ctx.fillStyle = hasIframes ? '#00ffff' : '#0ff'; // Cyan when invincible, bright cyan normally
   ctx.beginPath();
-  ctx.arc(400, 300, 8, 0, Math.PI * 2);
+  ctx.arc(playerPos.x, playerPos.y, state.player.radius, 0, Math.PI * 2);
   ctx.fill();
+
+  // I-frame indicator (pulsing ring)
+  if (hasIframes) {
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    const pulseSize = state.player.radius + 4 + Math.sin(state.time * 10) * 2;
+    ctx.beginPath();
+    ctx.arc(playerPos.x, playerPos.y, pulseSize, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 
   // Draw projectiles
   ctx.fillStyle = '#ff0';
@@ -245,12 +275,17 @@ function renderGame(
   ctx.font = '14px monospace';
   ctx.fillText(`Frame: ${state.frameCount}`, 10, 20);
   ctx.fillText(`Time: ${state.time.toFixed(2)}s | Min: ${minute}`, 10, 40);
-  ctx.fillText(`Enemies: ${state.enemies.length}`, 10, 60);
-  ctx.fillText(`Projectiles: ${state.projectiles.length}`, 10, 80);
+  ctx.fillText(
+    `Player HP: ${state.player.hp}/${state.player.maxHp}${hasIframes ? ' [INVINCIBLE]' : ''}`,
+    10,
+    60
+  );
+  ctx.fillText(`Enemies: ${state.enemies.length}`, 10, 80);
+  ctx.fillText(`Projectiles: ${state.projectiles.length}`, 10, 100);
   ctx.fillText(
     `Pool: ${state.projectilesPool.available()}/${state.projectilesPool.size()}`,
     10,
-    100
+    120
   );
 }
 

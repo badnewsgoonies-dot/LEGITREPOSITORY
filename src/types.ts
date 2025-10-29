@@ -44,6 +44,7 @@ export interface Projectile {
   damage: number;
   ttl: number; // time remaining in seconds
   ownerId?: string; // for collision filtering
+  radius: number; // collision radius
 }
 
 export interface Pool<T> {
@@ -68,6 +69,7 @@ export interface Enemy {
   speed: number;
   touchDamage: number;
   isElite: boolean;
+  radius: number; // collision radius
 }
 
 export interface WaveConfig {
@@ -81,6 +83,63 @@ export interface WaveConfig {
     touchDamage: number;
   }[];
   eliteChance: number; // 0.0 to 1.0
+}
+
+// ============================================================================
+// Player Types
+// ============================================================================
+
+export interface Player {
+  pos: Vec2;
+  hp: number;
+  maxHp: number;
+  iframes: number; // invincibility frames remaining (seconds)
+  iframeDuration: number; // total iframe duration after hit
+  radius: number; // collision radius
+}
+
+// ============================================================================
+// Collision Types
+// ============================================================================
+
+export interface AABB {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface Circle {
+  x: number;
+  y: number;
+  radius: number;
+}
+
+export type ContactType =
+  | 'projectile-enemy'
+  | 'enemy-player'
+  | 'projectile-projectile';
+
+export interface Contact {
+  type: ContactType;
+  entityA: string; // ID of first entity
+  entityB: string; // ID of second entity
+  damage?: number; // damage to apply
+  knockback?: Vec2; // knockback vector
+}
+
+export interface DamageEvent {
+  frame: number;
+  targetId: string;
+  damage: number;
+  source: 'projectile' | 'enemy' | 'hazard';
 }
 
 // ============================================================================
@@ -129,7 +188,8 @@ export interface WorldState {
   projectilesPool: Pool<Projectile>;
   enemies: Enemy[];
   spawnAccumulator: number; // accumulates spawn time
-  playerPos: Vec2; // for spawn positioning
+  player: Player;
+  damageEvents: DamageEvent[]; // for replay/logging
 }
 
 // ============================================================================
