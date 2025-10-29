@@ -7,6 +7,7 @@
 
 import { initWorld, updateWorld } from '../src/state/world';
 import { stepSync } from '../src/core/loop';
+import type { WorldState } from '../src/types';
 
 function verifySystem(): boolean {
   console.log('🔍 Verifying Nightfall Survivors System...\n');
@@ -42,9 +43,9 @@ function verifySystem(): boolean {
     // Test 4: Multiple Frames
     console.log('✓ Test 4: Running multiple frames...');
     const currentWorld = stepSync(world, updateWorld, 60); // 60 ticks
-    const expectedMinFrames = world.frameCount + 60;
-    if (currentWorld.frameCount < expectedMinFrames) {
-      console.error(`✗ Multiple frame execution failed (expected >= ${expectedMinFrames}, got ${currentWorld.frameCount})`);
+    const expectedFrameCount = world.frameCount + 60;
+    if (currentWorld.frameCount !== expectedFrameCount) {
+      console.error(`✗ Multiple frame execution failed (expected ${expectedFrameCount}, got ${currentWorld.frameCount})`);
       return false;
     }
     console.log(`  ✓ Ran 60 frames successfully (frame count increased from ${world.frameCount} to ${currentWorld.frameCount})`);
