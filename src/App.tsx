@@ -741,6 +741,24 @@ function renderGame(
   // Draw particles
   renderParticles(ctx, state.particles);
 
+  // Draw damage numbers
+  for (const dmgNum of state.damageNumbers) {
+    if (!dmgNum.active) continue;
+
+    ctx.save();
+    ctx.font = dmgNum.isCrit ? 'bold 24px monospace' : 'bold 18px monospace';
+    ctx.fillStyle = dmgNum.isCrit ? '#ffff00' : '#ffffff'; // Yellow for crits, white for normal
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const text = Math.floor(dmgNum.damage).toString();
+    ctx.strokeText(text, dmgNum.pos.x, dmgNum.pos.y);
+    ctx.fillText(text, dmgNum.pos.x, dmgNum.pos.y);
+    ctx.restore();
+  }
+
   // Restore screen shake (before UI elements)
   restoreScreenShake(ctx);
 

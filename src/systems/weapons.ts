@@ -34,7 +34,9 @@ export function stepWeapons(
   pool: Pool<Projectile>,
   ownerPos: Vec2,
   targetDir: Vec2,
-  hasFlamethrower: boolean = false
+  hasFlamethrower: boolean = false,
+  player?: { speed: number; area: number; duration: number },
+  upgrades?: any[]
 ): WeaponStepResult {
   let currentRng = rng;
   const newProjectiles: Projectile[] = [];
@@ -59,7 +61,9 @@ export function stepWeapons(
           pool,
           ownerPos,
           targetDir,
-          hasFlamethrower
+          hasFlamethrower,
+          player,
+          upgrades
         );
         currentRng = nextRng;
         newProjectiles.push(...projectiles);
@@ -94,7 +98,9 @@ function fireWeapon(
   pool: Pool<Projectile>,
   pos: Vec2,
   baseDir: Vec2,
-  hasFlamethrower: boolean = false
+  hasFlamethrower: boolean = false,
+  player?: { speed: number; area: number; duration: number },
+  upgrades?: any[]
 ): [Projectile[], RNG] {
   let currentRng = rng;
   const projectiles: Projectile[] = [];
@@ -147,16 +153,48 @@ function fireWeapon(
       dir.y /= len;
     }
 
+    // Calculate projectile speed (character speed stat + upgrade)
+    let finalSpeed = weapon.projectileSpeed;
+    if (player) {
+      finalSpeed *= player.speed;
+    }
+    if (upgrades) {
+      const speedUpgrade = upgrades.find((u: any) => u.type === 'projectile_speed');
+      if (speedUpgrade) {
+        const speedBonus = 1 + (speedUpgrade.value * speedUpgrade.currentLevel);
+        finalSpeed *= speedBonus;
+      }
+    }
+
+    // Calculate projectile size (character area stat + upgrade)
+    let finalRadius = 3; // Base radius
+    if (player) {
+      finalRadius *= player.area;
+    }
+    if (upgrades) {
+      const sizeUpgrade = upgrades.find((u: any) => u.type === 'projectile_size');
+      if (sizeUpgrade) {
+        const sizeBonus = 1 + (sizeUpgrade.value * sizeUpgrade.currentLevel);
+        finalRadius *= sizeBonus;
+      }
+    }
+
+    // Calculate projectile duration (character duration stat)
+    let finalTTL = weapon.ttl;
+    if (player) {
+      finalTTL *= player.duration;
+    }
+
     // Initialize projectile
     projectile.active = true;
     projectile.pos = { ...pos };
     projectile.dir = dir;
-    projectile.speed = weapon.projectileSpeed;
+    projectile.speed = finalSpeed;
     // Flamethrower doubles damage
     projectile.damage = hasFlamethrower ? weapon.damage * 2 : weapon.damage;
-    projectile.ttl = weapon.ttl;
+    projectile.ttl = finalTTL;
     projectile.ownerId = weapon.id;
-    projectile.radius = 3; // Collision radius
+    projectile.radius = finalRadius;
 
     projectiles.push(projectile);
   }

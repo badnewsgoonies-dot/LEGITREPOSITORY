@@ -41,7 +41,9 @@ export function stepSpawns(
   spawnAccumulator: number,
   rng: RNG,
   minute: number,
-  playerPos: Vec2
+  playerPos: Vec2,
+  playerLuck: number = 1.0,
+  luckUpgradeBonus: number = 0
 ): { newEnemies: Enemy[]; newAccumulator: number; rng: RNG } {
   let currentRng = rng;
   const newEnemies: Enemy[] = [];
@@ -64,8 +66,9 @@ export function stepSpawns(
     const [enemyType, rng1] = selectEnemyType(currentRng, waveConfig);
     currentRng = rng1;
 
-    // Check if elite
-    const [isElite, rng2] = chance(currentRng, waveConfig.eliteChance);
+    // Check if elite (apply luck multiplier from character + upgrades)
+    const eliteChanceWithLuck = Math.min(0.5, waveConfig.eliteChance * playerLuck + luckUpgradeBonus);
+    const [isElite, rng2] = chance(currentRng, eliteChanceWithLuck);
     currentRng = rng2;
 
     // Spawn enemy

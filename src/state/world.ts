@@ -18,7 +18,7 @@ import { getInput } from '../core/input';
 import { stepEnemyAI, stepEnemyProjectiles } from '../systems/enemy-ai';
 import { initParticles, stepParticles } from '../systems/particles';
 import { initScreenShake, updateScreenShake, addTrauma } from '../core/screenshake';
-import { initDamageNumbers } from '../systems/damage-numbers';
+import { initDamageNumbers, stepDamageNumbers } from '../systems/damage-numbers';
 
 import {
   checkPowerUpSpawns,
@@ -114,6 +114,23 @@ export function initWorld(seed: number, character?: CharacterDefinition): WorldS
       xp: 0,
       level: 1,
       xpToNext: calculateXPForLevel(1),
+
+      // Character stats
+      moveSpeed: baseStats.moveSpeed,
+      might: baseStats.might,
+      armor: baseStats.armor,
+      recovery: baseStats.recovery,
+      cooldown: baseStats.cooldown,
+      area: baseStats.area,
+      speed: baseStats.speed,
+      duration: baseStats.duration,
+      amount: baseStats.amount,
+      magnet: baseStats.magnet,
+      luck: baseStats.luck,
+      growth: baseStats.growth,
+      greed: baseStats.greed,
+      curse: baseStats.curse,
+      revivals: baseStats.revivals,
     },
     damageEvents: [],
     xpGems: [],
@@ -166,7 +183,9 @@ export function updateWorld(state: WorldState): WorldState {
     state.projectilesPool,
     playerPos,
     targetDir,
-    state.flamethrowerTime > 0 // Has flamethrower buff
+    state.flamethrowerTime > 0, // Has flamethrower buff
+    state.player, // Character stats
+    state.upgrades // Upgrades for projectile speed/size
   );
   currentRng = weaponsRng;
 
@@ -178,11 +197,13 @@ export function updateWorld(state: WorldState): WorldState {
 
   // Spawn enemies based on wave progression
   const minute = getMinute(state.time);
+  const luckUpgrade = state.upgrades.find((u) => u.type === 'luck');
+  const luckUpgradeBonus = luckUpgrade ? (luckUpgrade.value * luckUpgrade.currentLevel) : 0;
   const {
     newEnemies,
     newAccumulator,
     rng: spawnRng,
-  } = stepSpawns(state.dt, state.spawnAccumulator, currentRng, minute, playerPos);
+  } = stepSpawns(state.dt, state.spawnAccumulator, currentRng, minute, playerPos, state.player.luck, luckUpgradeBonus);
   currentRng = spawnRng;
 
   // Add new enemies to active list
@@ -243,6 +264,9 @@ export function updateWorld(state: WorldState): WorldState {
 
   // Update particles
   stepParticles(state.particles, state.dt, state.particlesPool);
+
+  // Update damage numbers
+  stepDamageNumbers(state.damageNumbers, state.dt, state.damageNumbersPool);
 
   // Update screen shake
   updateScreenShake(state.screenShake, state.dt);

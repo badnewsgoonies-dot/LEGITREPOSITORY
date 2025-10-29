@@ -147,6 +147,23 @@ export interface Player {
   xp: number; // current XP
   level: number; // current level
   xpToNext: number; // XP needed for next level
+
+  // Character stats
+  moveSpeed: number; // movement speed multiplier
+  might: number; // damage multiplier
+  armor: number; // damage reduction
+  recovery: number; // HP regen per second
+  cooldown: number; // weapon cooldown multiplier
+  area: number; // AOE size multiplier
+  speed: number; // projectile speed multiplier
+  duration: number; // weapon duration multiplier
+  amount: number; // projectile count bonus
+  magnet: number; // XP pickup range multiplier
+  luck: number; // item drop chance multiplier
+  growth: number; // XP gain multiplier
+  greed: number; // gold multiplier (future)
+  curse: number; // enemy spawn multiplier
+  revivals: number; // extra lives remaining
 }
 
 // ============================================================================
@@ -184,6 +201,7 @@ export interface Contact {
   entityB: string; // ID of second entity
   damage?: number; // damage to apply
   knockback?: Vec2; // knockback vector
+  isCrit?: boolean; // whether this was a critical hit
 }
 
 export interface DamageEvent {

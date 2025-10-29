@@ -53,9 +53,9 @@ export function spawnXPFromKills(
   world: WorldState,
   killedEnemies: Array<{ pos: Vec2; isElite: boolean }>
 ): void {
-  const magnetRange =
-    BASE_MAGNET_RANGE +
-    (world.upgrades.find((u) => u.type === 'xp_magnet')?.value ?? 0);
+  // Calculate magnet range: base * character magnet stat + upgrade bonus
+  const upgradeBonus = world.upgrades.find((u) => u.type === 'xp_magnet')?.value ?? 0;
+  const magnetRange = BASE_MAGNET_RANGE * world.player.magnet + upgradeBonus;
 
   for (const enemy of killedEnemies) {
     const value = enemy.isElite ? BASE_XP_VALUE * 3 : BASE_XP_VALUE;
@@ -109,8 +109,10 @@ export function collectXPGems(world: WorldState): boolean {
       // Spawn pickup particles
       spawnParticleBurst(world.particlesPool, 'pickup', gem.pos, 6);
 
-      // Collect gem
-      world.player.xp += gem.value;
+      // Collect gem (apply growth multiplier from character)
+      const xpGained = Math.floor(gem.value * world.player.growth);
+      world.player.xp += xpGained;
+      world.stats.xpCollected += xpGained;
       world.xpGems.splice(i, 1);
 
 

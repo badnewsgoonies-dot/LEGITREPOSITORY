@@ -21,6 +21,7 @@ import type {
 import { playSound } from '../core/audio';
 import { spawnParticleBurst } from '../systems/particles';
 import { addTrauma } from '../core/screenshake';
+import { spawnDamageNumber } from '../systems/damage-numbers';
 
 // Constants
 const KNOCKBACK_MAGNITUDE = 50; // pixels per collision
@@ -126,22 +127,48 @@ export function detectCollisions(world: WorldState): Contact[] {
     if (!proj.active) continue;
 
     for (const enemy of world.enemies) {
+      // Skip if already pierced this enemy
+      if (proj.pierced && proj.pierced.has(enemy.id)) continue;
+
       // Check collision
       const projCircle: Circle = { x: proj.pos.x, y: proj.pos.y, radius: proj.radius };
       const enemyCircle: Circle = { x: enemy.pos.x, y: enemy.pos.y, radius: enemy.radius };
 
       if (checkCircle(projCircle, enemyCircle)) {
+        // Calculate damage (with crit chance)
+        const critUpgrade = world.upgrades.find((u) => u.type === 'crit_chance');
+        const critChance = critUpgrade ? (critUpgrade.value * critUpgrade.currentLevel) : 0;
+        const isCrit = Math.random() < critChance;
+        const finalDamage = isCrit ? proj.damage * 2 : proj.damage;
+
         contacts.push({
           type: 'projectile-enemy',
           entityA: `projectile_${world.projectiles.indexOf(proj)}`,
           entityB: enemy.id,
-          damage: proj.damage,
+          damage: finalDamage,
           knockback: calculateKnockback(proj.pos, enemy.pos, KNOCKBACK_MAGNITUDE),
+          isCrit,
         });
 
-        // Mark projectile as inactive (will be removed)
-        proj.active = false;
-        break; // Projectile can only hit one enemy
+        // Handle pierce mechanics
+        const pierceUpgrade = world.upgrades.find((u) => u.type === 'pierce');
+        const pierceCount = pierceUpgrade ? (pierceUpgrade.value * pierceUpgrade.currentLevel) : 0;
+
+        if (pierceCount > 0) {
+          // Track pierced enemies
+          if (!proj.pierced) proj.pierced = new Set();
+          proj.pierced.add(enemy.id);
+
+          // Deactivate if pierced all available targets
+          if (proj.pierced.size > pierceCount) {
+            proj.active = false;
+            break;
+          }
+        } else {
+          // No pierce - deactivate immediately
+          proj.active = false;
+          break;
+        }
       }
     }
   }
@@ -234,6 +261,12 @@ export function resolveCollisions(world: WorldState, contacts: Contact[]): Damag
           source: 'projectile',
         });
 
+        // Spawn damage number
+        spawnDamageNumber(world.damageNumbersPool, enemy.pos, contact.damage, contact.isCrit || false);
+
+        // Track damage dealt
+        world.stats.damageDealt += contact.damage;
+
         // Apply knockback
         if (contact.knockback) {
           enemy.pos.x += contact.knockback.x * world.dt;
@@ -246,6 +279,41 @@ export function resolveCollisions(world: WorldState, contacts: Contact[]): Damag
           if (index !== -1) {
             // Spawn death particles
             spawnParticleBurst(world.particlesPool, 'death', enemy.pos, 12);
+
+            // Apply lifesteal
+            const lifestealUpgrade = world.upgrades.find((u) => u.type === 'lifesteal');
+            if (lifestealUpgrade) {
+              const healAmount = lifestealUpgrade.value * lifestealUpgrade.currentLevel;
+              world.player.hp = Math.min(world.player.maxHp, world.player.hp + healAmount);
+              // Spawn heal particles
+              spawnParticleBurst(world.particlesPool, 'pickup', world.player.pos, 3);
+            }
+
+            // Apply AoE explosion on death
+            const aoeUpgrade = world.upgrades.find((u) => u.type === 'area_damage');
+            if (aoeUpgrade) {
+              const aoeDamagePercent = aoeUpgrade.value * aoeUpgrade.currentLevel;
+              const aoeDamage = Math.floor(contact.damage * aoeDamagePercent);
+              const aoeRadius = 100; // Fixed AoE radius
+
+              // Damage nearby enemies
+              for (const nearbyEnemy of world.enemies) {
+                if (nearbyEnemy.id === enemy.id) continue; // Skip the killed enemy
+
+                const dx = nearbyEnemy.pos.x - enemy.pos.x;
+                const dy = nearbyEnemy.pos.y - enemy.pos.y;
+                const distSq = dx * dx + dy * dy;
+
+                if (distSq < aoeRadius * aoeRadius) {
+                  nearbyEnemy.hp -= aoeDamage;
+                  // Spawn hit particles
+                  spawnParticleBurst(world.particlesPool, 'hit', nearbyEnemy.pos, 4);
+                }
+              }
+
+              // Spawn explosion particles
+              spawnParticleBurst(world.particlesPool, 'death', enemy.pos, 20);
+            }
 
             world.enemies.splice(index, 1);
             // Play kill sound
@@ -260,15 +328,26 @@ export function resolveCollisions(world: WorldState, contacts: Contact[]): Damag
         }
       }
     } else if (contact.type === 'enemy-player') {
-      // Apply damage to player (respecting i-frames)
+      // Apply damage to player (respecting i-frames and armor)
       if (world.player.iframes <= 0 && contact.damage) {
-        world.player.hp -= contact.damage;
+        // Calculate armor reduction
+        const armorUpgrade = world.upgrades.find((u) => u.type === 'armor');
+        const armorReduction = armorUpgrade ? (armorUpgrade.value * armorUpgrade.currentLevel) : 0;
+        const totalArmor = world.player.armor + armorReduction;
+
+        // Apply damage with armor reduction (0-1 range)
+        const damageMultiplier = Math.max(0, 1 - totalArmor);
+        const finalDamage = Math.ceil(contact.damage * damageMultiplier);
+
+        world.player.hp -= finalDamage;
         world.player.iframes = world.player.iframeDuration; // Activate i-frames
+
+        world.stats.damageTaken += finalDamage;
 
         damageEvents.push({
           frame: world.frameCount,
           targetId: 'player',
-          damage: contact.damage,
+          damage: finalDamage,
           source: 'enemy',
         });
 

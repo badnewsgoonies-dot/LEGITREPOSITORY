@@ -8,59 +8,65 @@ import type { Upgrade, WorldState, Enemy } from '../types';
 import { getUpgradeMultiplier, getTotalUpgradeValue } from './draft';
 
 /**
- * Get scaled weapon damage based on upgrades
+ * Get scaled weapon damage based on character stats and upgrades
  */
 export function getScaledWeaponDamage(
   baseDamage: number,
+  player: { might: number },
   upgrades: Upgrade[]
 ): number {
-  const multiplier = getUpgradeMultiplier(upgrades, 'weapon_damage');
-  return Math.floor(baseDamage * multiplier);
+  const upgradeMultiplier = getUpgradeMultiplier(upgrades, 'weapon_damage');
+  return Math.floor(baseDamage * player.might * upgradeMultiplier);
 }
 
 /**
- * Get scaled weapon cooldown based on upgrades
+ * Get scaled weapon cooldown based on character stats and upgrades
  */
 export function getScaledWeaponCooldown(
   baseCooldown: number,
+  player: { cooldown: number },
   upgrades: Upgrade[]
 ): number {
-  const reduction = getUpgradeMultiplier(upgrades, 'weapon_cooldown');
-  return baseCooldown / reduction;
+  const upgradeReduction = getUpgradeMultiplier(upgrades, 'weapon_cooldown');
+  return (baseCooldown * player.cooldown) / upgradeReduction;
 }
 
 /**
- * Get scaled projectile count based on upgrades
+ * Get scaled projectile count based on character stats and upgrades
  */
 export function getScaledProjectileCount(
   baseCount: number,
+  player: { amount: number },
   upgrades: Upgrade[]
 ): number {
-  const bonus = getTotalUpgradeValue(upgrades, 'weapon_count');
-  return baseCount + bonus;
+  const upgradeBonus = getTotalUpgradeValue(upgrades, 'weapon_count');
+  return baseCount + player.amount + upgradeBonus;
 }
 
 /**
- * Get scaled player speed based on upgrades
+ * Get scaled player speed based on character stats and upgrades
  */
 export function getScaledPlayerSpeed(
   baseSpeed: number,
+  player: { moveSpeed: number },
   upgrades: Upgrade[]
 ): number {
-  const multiplier = getUpgradeMultiplier(upgrades, 'player_speed');
-  return baseSpeed * multiplier;
+  const upgradeMultiplier = getUpgradeMultiplier(upgrades, 'player_speed');
+  return baseSpeed * player.moveSpeed * upgradeMultiplier;
 }
 
 /**
  * Apply player regeneration (HP per second)
+ * Combines character recovery stat + upgrade regen
  */
 export function applyPlayerRegen(world: WorldState): void {
-  const regenRate = getTotalUpgradeValue(world.upgrades, 'player_regen');
+  const upgradeRegen = getTotalUpgradeValue(world.upgrades, 'player_regen');
+  const totalRegen = world.player.recovery + upgradeRegen;
 
-  if (regenRate > 0 && world.player.hp < world.player.maxHp) {
+  if (totalRegen > 0 && world.player.hp < world.player.maxHp) {
     world.player.hp = Math.min(
       world.player.maxHp,
-      world.player.hp + regenRate * world.dt
+      world.player.hp + totalRegen * world.dt
     );
   }
 }
@@ -96,7 +102,7 @@ export function scaleEnemyStats(enemy: Enemy, minute: number): void {
 }
 
 /**
- * Update all weapon stats based on current upgrades
+ * Update all weapon stats based on character stats and upgrades
  */
 export function updateWeaponStats(world: WorldState): void {
   for (const weapon of world.weapons) {
@@ -111,17 +117,20 @@ export function updateWeaponStats(world: WorldState): void {
       (weapon as any).baseProjectileCount = weapon.projectileCount;
     }
 
-    // Apply upgrades
+    // Apply character stats + upgrades
     weapon.damage = getScaledWeaponDamage(
       (weapon as any).baseDamage,
+      world.player,
       world.upgrades
     );
     weapon.cooldown = getScaledWeaponCooldown(
       (weapon as any).baseCooldown,
+      world.player,
       world.upgrades
     );
     weapon.projectileCount = getScaledProjectileCount(
       (weapon as any).baseProjectileCount,
+      world.player,
       world.upgrades
     );
   }

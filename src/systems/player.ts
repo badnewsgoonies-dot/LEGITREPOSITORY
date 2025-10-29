@@ -41,8 +41,8 @@ export function stepPlayer(
     vy /= len;
   }
 
-  // Apply speed scaling
-  const speed = getScaledPlayerSpeed(BASE_PLAYER_SPEED, upgrades);
+  // Apply speed scaling (character stats * upgrade multiplier)
+  const speed = getScaledPlayerSpeed(BASE_PLAYER_SPEED, player, upgrades);
 
   // Update position
   player.pos.x += vx * speed * dt;
