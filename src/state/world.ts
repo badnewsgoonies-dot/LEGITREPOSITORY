@@ -8,6 +8,7 @@ import { makePool } from '../util/pool';
 import { createProjectileFactory, stepProjectiles } from '../systems/projectiles';
 import { stepWeapons, createWeapon } from '../systems/weapons';
 import { stepSpawns, getMinute } from '../systems/spawn';
+import { stepCollision } from '../systems/collision';
 import type { WorldState } from '../types';
 
 /**
@@ -43,7 +44,15 @@ export function initWorld(seed: number, includeDefaultWeapon = true): WorldState
     projectilesPool,
     enemies: [],
     spawnAccumulator: 0,
-    playerPos: { x: 400, y: 300 }, // Center of 800x600 canvas
+    player: {
+      pos: { x: 400, y: 300 }, // Center of 800x600 canvas
+      hp: 100,
+      maxHp: 100,
+      iframes: 0,
+      iframeDuration: 1.0, // 1 second of invincibility after hit
+      radius: 12, // Player collision radius
+    },
+    damageEvents: [],
   };
 }
 
@@ -58,7 +67,7 @@ export function updateWorld(state: WorldState): WorldState {
   let currentRng = state.rng;
 
   // Player position and direction for demo
-  const playerPos = state.playerPos;
+  const playerPos = state.player.pos;
   const targetDir = { x: 1, y: 0 }; // Fire to the right
 
   // Update weapons and spawn projectiles
@@ -90,6 +99,10 @@ export function updateWorld(state: WorldState): WorldState {
   // Add new enemies to active list
   state.enemies.push(...newEnemies);
 
+  // Handle collisions (damage & knockback)
+  const newDamageEvents = stepCollision(state);
+  state.damageEvents.push(...newDamageEvents);
+
   return {
     ...state,
     time: state.time + state.dt,
@@ -97,7 +110,9 @@ export function updateWorld(state: WorldState): WorldState {
     rng: currentRng,
     projectiles: state.projectiles, // Reference same array (modified in-place)
     enemies: state.enemies, // Reference same array (modified in-place)
+    player: state.player, // Reference same object (modified in-place)
     spawnAccumulator: newAccumulator,
+    damageEvents: state.damageEvents, // Reference same array (modified in-place)
   };
 }
 
@@ -110,5 +125,5 @@ export function debugWorld(state: WorldState): string {
   const activeProj = state.projectiles.length;
   const poolAvail = state.projectilesPool.available();
   const minute = getMinute(state.time);
-  return `Frame ${state.frameCount} | Time ${state.time.toFixed(2)}s | Min: ${minute} | Enemies: ${state.enemies.length} | Projectiles: ${activeProj} | Pool: ${poolAvail}/512`;
+  return `Frame ${state.frameCount} | Time ${state.time.toFixed(2)}s | Min: ${minute} | HP: ${state.player.hp}/${state.player.maxHp} | Enemies: ${state.enemies.length} | Projectiles: ${activeProj}`;
 }

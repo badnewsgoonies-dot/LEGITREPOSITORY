@@ -162,6 +162,25 @@ function spawnEnemy(
     ? Math.floor(enemyConfig.touchDamage * ELITE_MULTIPLIERS.touchDamage)
     : enemyConfig.touchDamage;
 
+  // Determine collision radius based on enemy kind
+  let collisionRadius: number;
+  switch (enemyConfig.kind) {
+    case 'zombie':
+      collisionRadius = 8;
+      break;
+    case 'fast':
+      collisionRadius = 6;
+      break;
+    case 'tank':
+      collisionRadius = 10;
+      break;
+    case 'swarm':
+      collisionRadius = 4;
+      break;
+    default:
+      collisionRadius = 8; // Default fallback
+  }
+
   const enemy: Enemy = {
     id: `enemy_${enemyIdCounter++}`,
     kind: enemyConfig.kind,
@@ -171,6 +190,7 @@ function spawnEnemy(
     speed,
     touchDamage,
     isElite,
+    radius: collisionRadius,
   };
 
   return [enemy, currentRng];
