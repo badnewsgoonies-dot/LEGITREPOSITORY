@@ -108,9 +108,13 @@ function App() {
         <div>Status: {isRunning ? 'Running' : 'Stopped'}</div>
         <div>Paused: {worldState?.isPaused ? 'Yes' : 'No'}</div>
         <div>Frame: {worldState?.frameCount ?? 0}</div>
-        <div>Time: {worldState?.time.toFixed(2) ?? 0}s</div>
+        <div>
+          Time: {worldState?.time.toFixed(2) ?? 0}s | Minute:{' '}
+          {Math.floor((worldState?.time ?? 0) / 60)}
+        </div>
         <div>Seed: {worldState?.seed ?? INITIAL_SEED}</div>
         <div>Weapons: {worldState?.weapons.length ?? 0}</div>
+        <div>Enemies: {worldState?.enemies.length ?? 0}</div>
         <div>Projectiles: {worldState?.projectiles.length ?? 0}</div>
         <div>
           Pool: {worldState?.projectilesPool.available() ?? 0}/
@@ -158,6 +162,17 @@ function App() {
           ✓ Deterministic spread angles
           <br />✓ TTL-based lifecycle
         </p>
+        <p style={{ marginTop: '10px' }}>
+          <strong>System 4: Enemy Spawner & Waves</strong>
+        </p>
+        <p>
+          ✓ Deterministic wave progression
+          <br />
+          ✓ Weighted enemy type selection
+          <br />
+          ✓ Elite enemies with multipliers
+          <br />✓ Per-frame spawn cap (12 max)
+        </p>
       </div>
     </div>
   );
@@ -199,16 +214,43 @@ function renderGame(
     }
   }
 
+  // Draw enemies
+  for (const enemy of state.enemies) {
+    // Color based on type and elite status
+    let color = '#f00'; // default red
+    if (enemy.kind === 'fast') color = '#ff6600';
+    if (enemy.kind === 'tank') color = '#660000';
+    if (enemy.kind === 'swarm') color = '#ff9999';
+    if (enemy.isElite) color = '#ff00ff'; // elite purple
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    const size = enemy.kind === 'tank' ? 8 : enemy.kind === 'swarm' ? 4 : 6;
+    ctx.arc(enemy.pos.x, enemy.pos.y, size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw elite indicator
+    if (enemy.isElite) {
+      ctx.strokeStyle = '#ffff00';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(enemy.pos.x, enemy.pos.y, size + 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
   // Debug text
+  const minute = Math.floor(state.time / 60);
   ctx.fillStyle = '#0f0';
   ctx.font = '14px monospace';
   ctx.fillText(`Frame: ${state.frameCount}`, 10, 20);
-  ctx.fillText(`Time: ${state.time.toFixed(2)}s`, 10, 40);
-  ctx.fillText(`Projectiles: ${state.projectiles.length}`, 10, 60);
+  ctx.fillText(`Time: ${state.time.toFixed(2)}s | Min: ${minute}`, 10, 40);
+  ctx.fillText(`Enemies: ${state.enemies.length}`, 10, 60);
+  ctx.fillText(`Projectiles: ${state.projectiles.length}`, 10, 80);
   ctx.fillText(
     `Pool: ${state.projectilesPool.available()}/${state.projectilesPool.size()}`,
     10,
-    80
+    100
   );
 }
 

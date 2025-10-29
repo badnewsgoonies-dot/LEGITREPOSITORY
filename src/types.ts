@@ -54,6 +54,36 @@ export interface Pool<T> {
 }
 
 // ============================================================================
+// Enemy Types
+// ============================================================================
+
+export type EnemyKind = 'zombie' | 'fast' | 'tank' | 'swarm';
+
+export interface Enemy {
+  id: string;
+  kind: EnemyKind;
+  pos: Vec2;
+  hp: number;
+  maxHp: number;
+  speed: number;
+  touchDamage: number;
+  isElite: boolean;
+}
+
+export interface WaveConfig {
+  minute: number;
+  spawnRate: number; // enemies per second
+  enemies: {
+    kind: EnemyKind;
+    weight: number; // relative probability
+    hp: number;
+    speed: number;
+    touchDamage: number;
+  }[];
+  eliteChance: number; // 0.0 to 1.0
+}
+
+// ============================================================================
 // RNG Types
 // ============================================================================
 
@@ -97,6 +127,9 @@ export interface WorldState {
   weapons: Weapon[];
   projectiles: Projectile[];
   projectilesPool: Pool<Projectile>;
+  enemies: Enemy[];
+  spawnAccumulator: number; // accumulates spawn time
+  playerPos: Vec2; // for spawn positioning
 }
 
 // ============================================================================
