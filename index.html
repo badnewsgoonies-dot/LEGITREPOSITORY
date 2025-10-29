@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris - Line Bomb Edition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-info">
+            <h1>TETRIS</h1>
+            <div class="info-panel">
+                <div class="info-item">
+                    <span class="label">Score:</span>
+                    <span id="score" class="value">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Level:</span>
+                    <span id="level" class="value">1</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Lines:</span>
+                    <span id="lines" class="value">0</span>
+                </div>
+            </div>
+
+            <div class="next-piece-container">
+                <h3>Next Piece</h3>
+                <canvas id="next-piece-canvas" width="120" height="120"></canvas>
+            </div>
+
+            <div class="power-ups">
+                <h3>Power-Ups</h3>
+                <div class="power-up-item">
+                    <span class="label">LINE BOMBS:</span>
+                    <span id="bombs" class="value">3</span>
+                </div>
+                <p class="hint">Press 'B' to use</p>
+            </div>
+
+            <div class="controls">
+                <h3>Controls</h3>
+                <p>← → : Move</p>
+                <p>↑ : Rotate</p>
+                <p>↓ : Soft Drop</p>
+                <p>SPACE : Hard Drop</p>
+                <p><strong>B : LINE BOMB 💣</strong></p>
+            </div>
+
+            <button id="restart-btn" class="restart-btn">Restart Game</button>
+        </div>
+
+        <div class="game-board-container">
+            <canvas id="game-canvas" width="300" height="600"></canvas>
+            <div id="game-over" class="game-over hidden">
+                <h2>GAME OVER</h2>
+                <p>Final Score: <span id="final-score">0</span></p>
+                <button id="restart-game-over">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="tetris.js"></script>
+</body>
+</html>
