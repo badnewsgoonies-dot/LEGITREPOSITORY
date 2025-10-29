@@ -96,6 +96,9 @@ export interface Player {
   iframes: number; // invincibility frames remaining (seconds)
   iframeDuration: number; // total iframe duration after hit
   radius: number; // collision radius
+  xp: number; // current XP
+  level: number; // current level
+  xpToNext: number; // XP needed for next level
 }
 
 // ============================================================================
@@ -140,6 +143,45 @@ export interface DamageEvent {
   targetId: string;
   damage: number;
   source: 'projectile' | 'enemy' | 'hazard';
+}
+
+// ============================================================================
+// XP & Upgrade Types
+// ============================================================================
+
+export interface XPGem {
+  id: string;
+  pos: Vec2;
+  value: number; // XP value
+  radius: number; // collision radius
+  magnetRange: number; // range at which gem starts moving toward player
+}
+
+export type UpgradeType =
+  | 'weapon_damage'
+  | 'weapon_cooldown'
+  | 'weapon_count'
+  | 'player_speed'
+  | 'player_hp'
+  | 'player_regen'
+  | 'xp_magnet'
+  | 'new_weapon';
+
+export interface Upgrade {
+  id: string;
+  type: UpgradeType;
+  name: string;
+  description: string;
+  rarity: 'common' | 'rare' | 'epic';
+  value: number; // amount to add/multiply
+  maxLevel: number; // max times this can be picked
+  currentLevel: number; // times already picked
+}
+
+export interface DraftChoice {
+  upgrades: Upgrade[]; // 3 upgrades to choose from
+  rerollsAvailable: number;
+  banishesAvailable: number;
 }
 
 // ============================================================================
@@ -190,6 +232,10 @@ export interface WorldState {
   spawnAccumulator: number; // accumulates spawn time
   player: Player;
   damageEvents: DamageEvent[]; // for replay/logging
+  xpGems: XPGem[]; // XP pickups in world
+  upgrades: Upgrade[]; // currently applied upgrades
+  upgradePool: Upgrade[]; // available upgrades for drafting
+  draftChoice: DraftChoice | null; // current draft (null if not leveling up)
 }
 
 // ============================================================================

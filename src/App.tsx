@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import { start } from './core/loop';
 import { beginRun, endRun, log, exportRunLog } from './core/replay';
 import { initWorld, updateWorld } from './state/world';
-import type { WorldState } from './types';
+import { applyUpgrade } from './systems/draft';
+import type { WorldState, Upgrade } from './types';
 
 const INITIAL_SEED = 42;
 
@@ -91,6 +92,17 @@ function App() {
     }
   };
 
+  // Handle upgrade selection
+  const handleUpgradeSelect = (upgrade: Upgrade) => {
+    if (loopHandleRef.current && worldState?.draftChoice) {
+      const currentState = loopHandleRef.current.getState();
+      applyUpgrade(upgrade, currentState);
+      currentState.draftChoice = null;
+      currentState.isPaused = false;
+      setWorldState({ ...currentState });
+    }
+  };
+
   return (
     <div style={{ padding: '20px', fontFamily: 'monospace' }}>
       <h1>Nightfall Survivors - Core Loop Demo</h1>
@@ -114,17 +126,22 @@ function App() {
         </div>
         <div>Seed: {worldState?.seed ?? INITIAL_SEED}</div>
         <div>
-          Player HP: {worldState?.player.hp ?? 0}/{worldState?.player.maxHp ?? 0}
+          Level: {worldState?.player.level ?? 1} | XP: {worldState?.player.xp ?? 0}/
+          {worldState?.player.xpToNext ?? 0}
+        </div>
+        <div>
+          Player HP: {worldState?.player.hp.toFixed(1) ?? 0}/{worldState?.player.maxHp ?? 0}
           {(worldState?.player.iframes ?? 0) > 0 && ' [INVINCIBLE]'}
         </div>
         <div>Weapons: {worldState?.weapons.length ?? 0}</div>
+        <div>Upgrades: {worldState?.upgrades.length ?? 0}</div>
         <div>Enemies: {worldState?.enemies.length ?? 0}</div>
         <div>Projectiles: {worldState?.projectiles.length ?? 0}</div>
+        <div>XP Gems: {worldState?.xpGems.length ?? 0}</div>
         <div>
           Pool: {worldState?.projectilesPool.available() ?? 0}/
           {worldState?.projectilesPool.size() ?? 0}
         </div>
-        <div>Damage Events: {worldState?.damageEvents.length ?? 0}</div>
       </div>
 
       {/* Controls */}
@@ -189,7 +206,120 @@ function App() {
           ✓ Knockback mechanics
           <br />✓ Damage event logging
         </p>
+        <p style={{ marginTop: '10px' }}>
+          <strong>System 6: XP & Level-Up Draft</strong>
+        </p>
+        <p>
+          ✓ XP gem drops on enemy kill
+          <br />
+          ✓ Proximity magnet (80px + upgrades)
+          <br />
+          ✓ Level-up draft (3 weighted upgrades)
+          <br />✓ Deterministic draft rolls
+        </p>
+        <p style={{ marginTop: '10px' }}>
+          <strong>System 7: Stats & Scaling</strong>
+        </p>
+        <p>
+          ✓ Upgrade multipliers (damage, cooldown, count)
+          <br />
+          ✓ Player regeneration
+          <br />
+          ✓ Enemy difficulty curve
+          <br />✓ Weapon stat updates
+        </p>
       </div>
+
+      {/* Draft Modal */}
+      {worldState?.draftChoice && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: '#222',
+              padding: '30px',
+              borderRadius: '10px',
+              border: '2px solid #0f0',
+              maxWidth: '800px',
+            }}
+          >
+            <h2 style={{ color: '#0f0', marginTop: 0 }}>Level Up!</h2>
+            <p style={{ color: '#aaa', marginBottom: '20px' }}>
+              Choose an upgrade (Level {worldState.player.level})
+            </p>
+
+            <div style={{ display: 'flex', gap: '20px' }}>
+              {worldState.draftChoice.upgrades.map((upgrade) => {
+                const rarityColor =
+                  upgrade.rarity === 'epic'
+                    ? '#ff00ff'
+                    : upgrade.rarity === 'rare'
+                    ? '#00aaff'
+                    : '#aaa';
+
+                return (
+                  <button
+                    key={upgrade.id}
+                    onClick={() => handleUpgradeSelect(upgrade)}
+                    style={{
+                      flex: 1,
+                      padding: '20px',
+                      background: '#333',
+                      border: `2px solid ${rarityColor}`,
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontSize: '14px',
+                    }}
+                    onMouseOver={(e) =>
+                      (e.currentTarget.style.background = '#444')
+                    }
+                    onMouseOut={(e) =>
+                      (e.currentTarget.style.background = '#333')
+                    }
+                  >
+                    <div
+                      style={{
+                        color: rarityColor,
+                        fontWeight: 'bold',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      {upgrade.name}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#ccc' }}>
+                      {upgrade.description}
+                    </div>
+                    <div
+                      style={{
+                        marginTop: '10px',
+                        fontSize: '11px',
+                        color: '#888',
+                      }}
+                    >
+                      {upgrade.rarity.toUpperCase()} | Level{' '}
+                      {upgrade.currentLevel + 1}/{upgrade.maxLevel}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -267,6 +397,21 @@ function renderGame(
       ctx.arc(enemy.pos.x, enemy.pos.y, size + 2, 0, Math.PI * 2);
       ctx.stroke();
     }
+  }
+
+  // Draw XP gems
+  ctx.fillStyle = '#00ff00';
+  for (const gem of state.xpGems) {
+    ctx.beginPath();
+    ctx.arc(gem.pos.x, gem.pos.y, gem.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw magnet range indicator (subtle)
+    ctx.strokeStyle = 'rgba(0, 255, 0, 0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(gem.pos.x, gem.pos.y, gem.magnetRange, 0, Math.PI * 2);
+    ctx.stroke();
   }
 
   // Debug text

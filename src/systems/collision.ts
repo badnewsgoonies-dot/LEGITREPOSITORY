@@ -16,8 +16,6 @@ import type {
   AABB,
   Rect,
   Circle,
-  Projectile,
-  Enemy,
   Player,
 } from '../types';
 
