@@ -29,6 +29,16 @@ let currentInput: InputState = {
 };
 
 let canvasElement: HTMLCanvasElement | null = null;
+let cachedRect: DOMRect | null = null;
+
+/**
+ * Update cached bounding rect
+ */
+function updateCachedRect(): void {
+  if (canvasElement) {
+    cachedRect = canvasElement.getBoundingClientRect();
+  }
+}
 
 /**
  * Initialize input listeners (call once on app start)
@@ -38,9 +48,14 @@ export function initInput(canvas?: HTMLCanvasElement): void {
     // Remove listener from previous canvas if different
     if (canvasElement && canvasElement !== canvas) {
       canvasElement.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', updateCachedRect);
     }
     canvasElement = canvas;
     canvas.addEventListener('mousemove', handleMouseMove);
+    
+    // Cache initial rect and update on resize
+    updateCachedRect();
+    window.addEventListener('resize', updateCachedRect);
   }
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('keyup', handleKeyUp);
@@ -55,14 +70,15 @@ export function cleanupInput(): void {
   }
   window.removeEventListener('keydown', handleKeyDown);
   window.removeEventListener('keyup', handleKeyUp);
+  window.removeEventListener('resize', updateCachedRect);
+  cachedRect = null;
 }
 
 function handleMouseMove(e: MouseEvent): void {
-  if (!canvasElement) return;
+  if (!canvasElement || !cachedRect) return;
 
-  const rect = canvasElement.getBoundingClientRect();
-  currentInput.mouseX = e.clientX - rect.left;
-  currentInput.mouseY = e.clientY - rect.top;
+  currentInput.mouseX = e.clientX - cachedRect.left;
+  currentInput.mouseY = e.clientY - cachedRect.top;
 }
 
 function handleKeyDown(e: KeyboardEvent): void {
